@@ -137,6 +137,7 @@ class WarningManager:
 #########################################
 
 def _get_n_chi_squared_from_predictions_jax(x, y, predictions, alpha=0.01, eps_scale=1e-4):
+    """ this function is the implementation of equation (3) and (4) in the paper"""
     """Internal function for normalized chi-squared calculation using JAX."""
     # Residuals
     residuals = y - predictions
