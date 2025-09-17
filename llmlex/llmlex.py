@@ -143,6 +143,8 @@ def single_call(client, img, x, y, model="openai/gpt-4o-mini", function_list=Non
             # Generate the prompt
             logger.debug("Generating prompt")
             prompt = get_prompt(function_list, imports=imports)
+            logger.debug(f"Prompt: {prompt}")
+            print(f"Prompt: {prompt}")
             
             # Make API call
             try:
