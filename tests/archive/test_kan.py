@@ -23,7 +23,7 @@ import llmlex.old_kan_sr as kan_sr
 
 # Create a modified version of kan_to_symbolic that handles the symb_formula issue
 def test_kan_to_symbolic(model, client, population=10, generations=3, temperature=0.1, 
-                        gpt_model="openai/gpt-4o-mini", exit_condition=1e-3, verbose=0, use_async=False):
+                        gpt_model="openai/gpt-5-nano-2025-08-07-mini", exit_condition=1e-3, verbose=0, use_async=False):
     """
     A test-friendly version of kan_to_symbolic that fixes the symb_formula issue.
     This is a copy of the implementation with fixes for the uninitialized variable.
@@ -504,7 +504,7 @@ class TestKanSrFunctions(unittest.TestCase):
             best_expressions, best_n_chi_squared, result_dicts = kan_sr.optimise_expression(
                 self.mock_client,
                 [test_expression],
-                "openai/gpt-4o",
+                "openai/gpt-5-nano-2025-08-07",
                 x_data,
                 y_data
             )
@@ -512,7 +512,7 @@ class TestKanSrFunctions(unittest.TestCase):
             # Verify the API was called with the right model
             self.mock_client.chat.completions.create.assert_called()
             args, kwargs = self.mock_client.chat.completions.create.call_args
-            self.assertEqual(kwargs['model'], "openai/gpt-4o")
+            self.assertEqual(kwargs['model'], "openai/gpt-5-nano-2025-08-07")
             
             # Verify basic structure of results
             self.assertIsInstance(best_expressions, list)
@@ -586,7 +586,7 @@ class TestKanSrFunctions(unittest.TestCase):
             best_expressions, best_n_chi_squared, result_dicts = kan_sr.optimise_expression(
                 self.mock_client,
                 [test_expression],
-                "openai/gpt-4o",
+                "openai/gpt-5-nano-2025-08-07",
                 x_data,
                 y_data
             )
@@ -651,7 +651,7 @@ class TestKanSrFunctions(unittest.TestCase):
             best_expressions, best_n_chi_squared, result_dicts = kan_sr.optimise_expression(
                 self.mock_client,
                 [test_expression],
-                "openai/gpt-4o",
+                "openai/gpt-5-nano-2025-08-07",
                 x_data,
                 y_data
             )
@@ -805,7 +805,7 @@ class TestKanSrFunctions(unittest.TestCase):
                 train_steps=50,
                 generations=1,
                 population=5,
-                gpt_model="openai/gpt-4o",
+                gpt_model="openai/gpt-5-nano-2025-08-07",
                 plot_fit=False  # Important: set to False to prevent plot_results call
             )
             

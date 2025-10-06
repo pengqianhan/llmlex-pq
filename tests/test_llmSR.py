@@ -320,7 +320,7 @@ This function captures both the oscillation and decay visible in the data."""
                 base64_image,
                 x,
                 y,
-                model="openai/gpt-4o-mini"  # Use mini model to save costs
+                model="openai/gpt-5-nano-2025-08-07-mini"  # Use mini model to save costs
             )
             
             # Verify basic structure

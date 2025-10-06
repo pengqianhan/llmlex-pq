@@ -60,7 +60,7 @@ ax.scatter(x, y)
 base64_img = llmlex.images.generate_base64_image(fig, ax, x, y)
 
 # Run symbolic regression
-result = llmlex.single_call(client, base64_img, x, y, model="openai/gpt-4o")
+result = llmlex.single_call(client, base64_img, x, y, model="openai/gpt-5-nano-2025-08-07")
 
 # View results
 print(f"Best function: {result['ansatz']}")
@@ -71,7 +71,7 @@ print(f"Score: {result['score']}")
 populations = llmlex.run_genetic(
     client, base64_img, x, y, 
     population_size=5, num_of_generations=3,
-    model="openai/gpt-4o"
+    model="openai/gpt-5-nano-2025-08-07"
 )
 ```
 
@@ -93,14 +93,14 @@ res = model.fit(dataset, opt="LBFGS", steps=100);
 
 # run llmlex on each edge
 
-sym_expr = llmlex.kan_to_symbolic(model, client, gpt_model="openai/gpt-4o", exit_condition=min(res['train_loss']).item(), use_async=True, population=10, generations=3, temperature=0.1)#
+sym_expr = llmlex.kan_to_symbolic(model, client, gpt_model="openai/gpt-5-nano-2025-08-07", exit_condition=min(res['train_loss']).item(), use_async=True, population=10, generations=3, temperature=0.1)#
 
 best_expressions, best_chi_squareds, results_dicts, results_all_dicts = multivariate_kansr.get_symbolic(
     client=client,
     population=5,
     generations=2,
     temperature=0.1,
-    gpt_model="openai/gpt-4o",
+    gpt_model="openai/gpt-5-nano-2025-08-07",
     verbose=1,
     use_async=True,
     plot_fit=True,

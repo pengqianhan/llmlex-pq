@@ -204,7 +204,7 @@ class KANLEX:
         return self.final_train_loss
     
     def get_symbolic(self, client=None, population=10, generations=3, temperature=0.1, 
-                           gpt_model="openai/gpt-4o", exit_condition=None, verbose=0, 
+                           gpt_model="openai/gpt-5-nano-2025-08-07", exit_condition=None, verbose=0, 
                            use_async=True, plot_fit=True, plot_parents=False, demonstrate_parent_plotting=False, constant_on_failure=False,
                            num_answers_per_prompt=3, timeout_simplify=10, custom_system_prompt_for_second_simplification=None,
                            prune_small_terms=True, plot_all=True, original_f=None, number_of_prompts=3, simplification_gpt_model=None, imports=None):
@@ -925,7 +925,7 @@ class KANLEX:
             'best_fit_type': extract_value(best_result, 'fit_type')
         }
 
-    def optimise_expressions(self, client=None, simplification_gpt_model="openai/gpt-4o", x_data=None, y_data=None, custom_system_prompt=None, 
+    def optimise_expressions(self, client=None, simplification_gpt_model="openai/gpt-5-nano-2025-08-07", x_data=None, y_data=None, custom_system_prompt=None, 
                             prune_small_terms=True, plot_all=True, original_f=None,
                             num_answers_per_prompt=3, timeout_simplify=10, number_of_prompts=3, print_top_n=10):
         """
@@ -1723,7 +1723,7 @@ class KANLEX:
         return fig, ax
 
     def run_complete_pipeline(self, client=None, f=None, ranges=(-np.pi, np.pi), train_steps=50, 
-                             generations=3, gpt_model="openai/gpt-4o", node_th=0.2, edge_th=0.2, 
+                             generations=3, gpt_model="openai/gpt-5-nano-2025-08-07", node_th=0.2, edge_th=0.2, 
                              custom_system_prompt_for_second_simplification=None, optimiser="LBFGS", 
                              population=10, temperature=0.1, exit_condition=None, verbose=0, 
                              use_async=True, plot_fit=True, plot_parents=False, demonstrate_parent_plotting=False, constant_on_failure=False,
@@ -2017,7 +2017,7 @@ class KANLEX:
         self.logger.debug(f"Converted expression with floats to expression with params: {expr_str_with_params}")
         return expr_str_with_params, param_values
     
-    def _call_model_simplify(self, ranges, expr, client=None, gpt_model="openai/gpt-4o", 
+    def _call_model_simplify(self, ranges, expr, client=None, gpt_model="openai/gpt-5-nano-2025-08-07", 
                             system_prompt=None, sympy=True, numpy=False, num_answers=3, number_of_prompts=3):
         """
         Call LLM to simplify a mathematical expression within specified ranges.
@@ -2031,7 +2031,7 @@ class KANLEX:
             ranges: Tuple of (min, max) values for the interval where the expression will be used
             expr: The expression to simplify
             client: LLM API client to use for the request
-            gpt_model: The GPT model to use (e.g., "openai/gpt-4o")
+            gpt_model: The GPT model to use (e.g., "openai/gpt-5-nano-2025-08-07")
             system_prompt: Custom system prompt to use (if None, uses a default prompt)
             sympy: Whether to request SymPy-compatible expressions (default: True)
             numpy: Whether to request NumPy-compatible expressions (default: False)
@@ -2218,7 +2218,7 @@ class KANLEX:
 
 
 def run_complete_pipeline(client, f, ranges=(-np.pi, np.pi), width=[1,4,1], grid=7, k=3, 
-                         train_steps=50, generations=3, gpt_model="openai/gpt-4o", device='cpu',
+                         train_steps=50, generations=3, gpt_model="openai/gpt-5-nano-2025-08-07", device='cpu',
                          node_th=0.2, edge_th=0.2, custom_system_prompt_for_second_simplification=None, 
                          optimiser="LBFGS", population=10, temperature=0.1,
                          exit_condition=None, verbose=0, use_async=True, plot_fit=True, 

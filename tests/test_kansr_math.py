@@ -99,7 +99,7 @@ class TestKANLExMathematicalCorrectness(unittest.TestCase):
                 # Run the optimisation
                 best_expressions, best_n_chi_squared, result_dicts, all_results_sorted = kansr.optimise_expressions(
                     client=self.mock_client,
-                    simplification_gpt_model="openai/gpt-4o-mini",
+                    simplification_gpt_model="openai/gpt-5-nano-2025-08-07-mini",
                     x_data=x_data,
                     y_data=y_data
                 )
@@ -190,7 +190,7 @@ class TestKANLExMathematicalCorrectness(unittest.TestCase):
                 # Run the optimisation
                 best_expressions, best_n_chi_squared, result_dicts, all_results_sorted = kansr.optimise_expressions(
                     client=self.mock_client,
-                    simplification_gpt_model="openai/gpt-4o-mini",
+                    simplification_gpt_model="openai/gpt-5-nano-2025-08-07-mini",
                     x_data=x_data,
                     y_data=y_data
                 )
@@ -260,7 +260,7 @@ class TestKANLExMathematicalCorrectness(unittest.TestCase):
                 # Run the optimisation
                 best_expressions, best_n_chi_squared, result_dicts, all_results_sorted = kansr.optimise_expressions(
                     client=self.mock_client,
-                    simplification_gpt_model="openai/gpt-4o-mini",
+                    simplification_gpt_model="openai/gpt-5-nano-2025-08-07-mini",
                     x_data=x_data,
                     y_data=y_data
                 )

@@ -98,7 +98,7 @@ def execute_async_in_loop(coro):
             else:
                 asyncio.set_event_loop(None)
     
-def single_call(client, img, x, y, model="openai/gpt-4o-mini", function_list=None, system_prompt=None, max_retries=3, stats=None, imports=None):
+def single_call(client, img, x, y, model="openai/gpt-5-nano-2025-08-07-mini", function_list=None, system_prompt=None, max_retries=3, stats=None, imports=None):
     """
     Executes a single call of to a specified llm-model with given parameters and processes the response.
     Args:
@@ -106,7 +106,7 @@ def single_call(client, img, x, y, model="openai/gpt-4o-mini", function_list=Non
         img: The base64 encoded image to use for the model.
         x: The x-values for curve fitting.
         y: The y-values for curve fitting.
-        model (str, optional): The model identifier to be used. Defaults to "openai/gpt-4o-mini".
+        model (str, optional): The model identifier to be used. Defaults to "openai/gpt-5-nano-2025-08-07-mini".
         function_list (list, optional): A list of functions to be included in the prompt. Defaults to None.
         system_prompt (str, optional): A system-level prompt to guide the model's behavior. Defaults to None.
         max_retries (int, optional): Maximum number of retries for parsing errors. Default is 3.
@@ -163,6 +163,7 @@ def single_call(client, img, x, y, model="openai/gpt-4o-mini", function_list=Non
             # Extract ansatz
             try:
                 logger.debug("Extracting ansatz from response")
+                logger.info(f"Response: {response}")
                 ansatz, num_params = extract_ansatz(response)
                 logger.info(f"Extracted ansatz: {ansatz[:50]}{'...' if len(ansatz) > 50 else ''} with {num_params} parameters")
                 stats.stage_success("ansatz_extraction")
@@ -348,7 +349,7 @@ def single_call(client, img, x, y, model="openai/gpt-4o-mini", function_list=Non
 
 #        raise
 
-async def async_single_call(client, img, x, y, model="openai/gpt-4o-mini", function_list=None, system_prompt=None, max_retries=3, stats=None, plot_parents=False, imports=None):
+async def async_single_call(client, img, x, y, model="openai/gpt-5-nano-2025-08-07-mini", function_list=None, system_prompt=None, max_retries=3, stats=None, plot_parents=False, imports=None):
     """
     Asynchronous version of single_call. Executes a single call to a specified llm-model with given parameters.
     This function is meant to be used with asyncio to allow for concurrent model calls.
@@ -516,7 +517,7 @@ async def async_single_call(client, img, x, y, model="openai/gpt-4o-mini", funct
         raise RuntimeError("Unknown error in async_single_call")
 
 def run_genetic(client, base64_image, x, y, population_size, num_of_generations,
-                temperature=1., model="openai/gpt-4o-mini", exit_condition=1e-5, system_prompt=None, 
+                temperature=1., model="openai/gpt-5-nano-2025-08-07-mini", exit_condition=1e-5, system_prompt=None, 
                 elite=False, for_kan=False, use_async=True, plot_parents=False, demonstrate_parent_plotting=False, constant_on_failure=False, disable_parse_warnings=False, imports=None):
     """
         Run a genetic algorithm to fit a model to the given data.
@@ -528,7 +529,7 @@ def run_genetic(client, base64_image, x, y, population_size, num_of_generations,
             population_size (int): The size of the population for the genetic algorithm.
             num_of_generations (int): The number of generations to run the genetic algorithm.
             temperature (float, optional): The temperature parameter for the selection process. Default is 1.
-            model (str, optional): The model to use for the API calls. Default is "openai/gpt-4o-mini".
+            model (str, optional): The model to use for the API calls. Default is "openai/gpt-5-nano-2025-08-07-mini".
             exit_condition (float, optional): The exit condition for the genetic algorithm. Default is 1e-5.
             system_prompt (str, optional): The system prompt to use for the API calls. Default is None.
             elite (bool, optional): Whether to use elitism in the genetic algorithm. Default is False.
@@ -839,7 +840,7 @@ def run_genetic(client, base64_image, x, y, population_size, num_of_generations,
     
     return populations
 
-def kan_to_symbolic(model, client, population=10, generations=3, temperature=0.1, gpt_model="openai/gpt-4o-mini", exit_condition=1e-3, verbose=0, use_async=True, plot_fit=True, plot_parents=False, demonstrate_parent_plotting=False, constant_on_failure=False, disable_parse_warnings=False, imports=None):
+def kan_to_symbolic(model, client, population=10, generations=3, temperature=0.1, gpt_model="openai/gpt-5-nano-2025-08-07-mini", exit_condition=1e-3, verbose=0, use_async=True, plot_fit=True, plot_parents=False, demonstrate_parent_plotting=False, constant_on_failure=False, disable_parse_warnings=False, imports=None):
     """
     Converts a given kan model symbolic representations using llmlexs.
     Parameters:
@@ -848,7 +849,7 @@ def kan_to_symbolic(model, client, population=10, generations=3, temperature=0.1
         population (int, optional): The population size for the genetic algorithm. Default is 10.
         generations (int, optional): The number of generations for the genetic algorithm. Default is 3.
         temperature (float, optional): The temperature parameter for the genetic algorithm. Default is 0.1.
-        llm_model (str, optional): The GPT model to use for generating symbolic functions. Default is "openai/gpt-4o-mini".
+        llm_model (str, optional): The GPT model to use for generating symbolic functions. Default is "openai/gpt-5-nano-2025-08-07-mini".
         exit_condition (float, optional): The exit condition for the genetic algorithm. Default is 1e-3.
         verbose (int, optional): Verbosity level for logging. Default is 0.
         use_async (bool, optional): Whether to use asynchronous processing for population generation. Default is True.

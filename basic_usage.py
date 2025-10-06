@@ -12,7 +12,7 @@ client = openai.OpenAI(
     base_url="https://openrouter.ai/api/v1",
     api_key=os.getenv("OPENROUTER_API_KEY") if os.getenv("OPENROUTER_API_KEY") else "<<<<<<your_api_key>>>>>>>", 
 )
-# model_name = "openai/gpt-4o"
+# model_name = "openai/gpt-5-nano-2025-08-07"
 # model_name = "moonshotai/kimi-vl-a3b-thinking:free" # not working
 model_name = "qwen/qwen2.5-vl-32b-instruct:free"
 # Generate data

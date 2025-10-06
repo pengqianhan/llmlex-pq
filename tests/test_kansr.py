@@ -435,7 +435,7 @@ class TestKANLExClass(unittest.TestCase):
             
             # Call the method with mocks in place
             best_expressions, best_chi_squareds, result_dicts, all_results_sorted = self.kansr.optimise_expressions(
-                self.mock_client, "openai/gpt-4o", plot_all=False
+                self.mock_client, "openai/gpt-5-nano-2025-08-07", plot_all=False
             )
             
 
@@ -468,7 +468,7 @@ class TestKANLExClass(unittest.TestCase):
             kansr = KANLEX(client=self.mock_client, model=self.mock_kan)
             kansr.expression_tree = None  # Ensure node_tree is not set
             with self.assertRaises(ValueError):
-                kansr.optimise_expressions(self.mock_client, "openai/gpt-4o")
+                kansr.optimise_expressions(self.mock_client, "openai/gpt-5-nano-2025-08-07")
         
         # Test without dataset
         with patch('llmlex.kanlex.KAN'):
@@ -476,7 +476,7 @@ class TestKANLExClass(unittest.TestCase):
             kansr.expression_tree = self.kansr.expression_tree
             kansr.dataset = None  # Ensure dataset is not set
             with self.assertRaises(ValueError):
-                kansr.optimise_expressions(self.mock_client, "openai/gpt-4o")
+                kansr.optimise_expressions(self.mock_client, "openai/gpt-5-nano-2025-08-07")
                 
     def test_call_model_simplify_with_mocked_responses(self):
         """Test the behaviors of _call_model_simplify with mocked LLM responses."""
@@ -520,7 +520,7 @@ class TestKANLExClass(unittest.TestCase):
                     
                     # Call optimise_expressions which will use our mocked _call_model_simplify
                     best_expressions, best_chi_squareds, result_dicts, _ = self.kansr.optimise_expressions(
-                        self.mock_client, "openai/gpt-4o", plot_all=False
+                        self.mock_client, "openai/gpt-5-nano-2025-08-07", plot_all=False
                     )
                     
                     # Print debug info
@@ -579,7 +579,7 @@ class TestKANLExClass(unittest.TestCase):
             
             # Run the optimisation
             best_expressions, best_chi_squareds, result_dicts, _ = self.kansr.optimise_expressions(
-                self.mock_client, "openai/gpt-4o", plot_all=False
+                self.mock_client, "openai/gpt-5-nano-2025-08-07", plot_all=False
             )
             
             # Print debug info
@@ -805,7 +805,7 @@ class TestKANLExClass(unittest.TestCase):
                 ranges=(-5, 5),
                 expr="2.0 * x + 1.0",
                 client=self.mock_client,
-                gpt_model="openai/gpt-4o",
+                gpt_model="openai/gpt-5-nano-2025-08-07",
                 num_answers=3
             )
             

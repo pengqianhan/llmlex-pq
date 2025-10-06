@@ -68,7 +68,7 @@ class TestLLM(unittest.TestCase):
         # Call the function
         result = call_model(
             mock_client,
-            "openai/gpt-4o",
+            "openai/gpt-5-nano-2025-08-07",
             "dummy_base64_image",
             "test prompt",
             "test system prompt"
@@ -78,7 +78,7 @@ class TestLLM(unittest.TestCase):
         mock_chat.completions.create.assert_called_once()
         call_kwargs = mock_chat.completions.create.call_args[1]
         
-        self.assertEqual(call_kwargs['model'], "openai/gpt-4o")
+        self.assertEqual(call_kwargs['model'], "openai/gpt-5-nano-2025-08-07")
         self.assertEqual(call_kwargs['messages'][0]['content'], "test system prompt")
         self.assertEqual(call_kwargs['messages'][1]['role'], "user")
         
@@ -117,7 +117,7 @@ class TestLLM(unittest.TestCase):
         async def test_coro():
             result = await async_call_model(
                 mock_client,
-                "openai/gpt-4o",
+                "openai/gpt-5-nano-2025-08-07",
                 "dummy_base64_image",
                 "test prompt",
                 "test system prompt"
