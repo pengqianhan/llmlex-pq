@@ -295,6 +295,40 @@ def get_prompt(function_list=None, imports=None):
 
     logger.debug(f"Generated prompt with {len(function_list)} functions and {len(imports)} imports")
     return prompt
+def get_prompt_ha(function_list=None, imports=None):
+    """
+    Generates the user prompt given a list of functions.
+    Args:
+        function_list (list, optional): A list of strings where each string is a mathematical expression to be used in the lambda functions. 
+                                        If None, defaults to ["params[0]"].
+        imports (list, optional): A list of import statements to include at the beginning of the prompt.
+                                  If None, defaults to ["import numpy as np"].
+    Returns:
+        str: A string containing the generated user prompt with lambda function definitions.
+    """
+    logger.debug(f"Generating prompt with function_list: {function_list}, imports: {imports}")
+    
+    # Use default if no function list provided
+    if function_list is None:
+        function_list = [("params[0]", 1)]
+        logger.debug("No function list provided, using default: ['params[0]']")
+    
+    # Use default imports if none provided
+    if imports is None:
+        imports = ["import numpy as np"]
+        logger.debug("No imports provided, using default: ['import numpy as np']")
+    
+    # Build the prompt
+    prompt = ""
+    for import_stmt in imports:
+        prompt += f"{import_stmt}\n"
+        
+    for n in range(len(function_list)):
+        prompt += f"curve_{n} = lambda x, *params: {function_list[n][0]} \n"
+    prompt += f"curve_{len(function_list)} = lambda x, *params:"
+
+    logger.debug(f"Generated prompt with {len(function_list)} functions and {len(imports)} imports")
+    return prompt
 
 @rate_limit_api_call
 def call_model(client, model, image, prompt, system_prompt=None):

@@ -144,13 +144,14 @@ def single_call(client, img, x, y, model="openai/gpt-4o-mini", function_list=Non
             logger.debug("Generating prompt")
             prompt = get_prompt(function_list, imports=imports)
             logger.debug(f"Prompt: {prompt}")
-            print(f"Prompt: {prompt}")
             
             # Make API call
             try:
                 # Only make a new API call on the first attempt or if we need to retry with a new call
                 if retry_count == 1 or response is None:
-                    logger.debug(f"Calling model {model}")
+                    logger.info(f"Calling model {model}")
+                    logger.info(f"system_prompt: {system_prompt}")# None
+                    logger.info(f"prompt: {prompt}")
                     response = call_model(client, model, img, prompt, system_prompt=system_prompt)
                 stats.stage_success("api_call")
             except Exception as e:
