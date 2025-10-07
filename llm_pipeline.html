@@ -255,6 +255,121 @@
         gap: 0.9rem;
       }
 
+      .method-diagram {
+        border-radius: 22px;
+        padding: 2.2rem clamp(1.4rem, 3vw, 2.8rem);
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(240, 247, 255, 0.95));
+        border: 1px solid rgba(51, 102, 204, 0.2);
+        box-shadow: 0 28px 45px rgba(23, 37, 79, 0.12);
+      }
+
+      .diagram-top {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.7rem 1.1rem;
+        border-radius: 14px;
+        background: linear-gradient(120deg, rgba(195, 230, 255, 0.85), rgba(224, 242, 255, 0.85));
+        border: 1px solid rgba(51, 102, 204, 0.25);
+        margin-bottom: 1.6rem;
+        font-weight: 600;
+        color: #244a88;
+        gap: 1rem;
+      }
+
+      .diagram-top span {
+        font-size: 0.95rem;
+        color: rgba(36, 74, 136, 0.78);
+      }
+
+      .diagram-columns {
+        position: relative;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1.3rem;
+        padding: 1.2rem 1.1rem 1.6rem;
+        background: rgba(250, 253, 255, 0.94);
+        border: 1px dashed rgba(51, 102, 204, 0.35);
+        border-radius: 16px;
+      }
+
+      .diagram-columns::after {
+        content: "";
+        position: absolute;
+        right: -70px;
+        top: 50%;
+        width: 60px;
+        height: 2px;
+        background: linear-gradient(90deg, rgba(51, 102, 204, 0.0), rgba(51, 102, 204, 0.6));
+        transform: translateY(-50%);
+      }
+
+      .diagram-box {
+        border-radius: 14px;
+        padding: 1rem 1rem 1.1rem;
+        background: #fff;
+        border: 1px dashed rgba(51, 102, 204, 0.38);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82);
+        display: flex;
+        flex-direction: column;
+        gap: 0.55rem;
+        min-height: 140px;
+      }
+
+      .diagram-box h3 {
+        margin: 0;
+        font-size: 1.05rem;
+        color: var(--accent);
+        display: flex;
+        align-items: center;
+        gap: 0.4rem;
+      }
+
+      .diagram-box p {
+        margin: 0;
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
+
+      .diagram-flow-note {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 0.8rem;
+        font-size: 0.95rem;
+        color: #244a88;
+        margin-top: 1rem;
+      }
+
+      .diagram-flow-note span {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: rgba(51, 102, 204, 0.15);
+        color: var(--accent);
+        font-size: 1.2rem;
+      }
+
+      .diagram-loop {
+        margin-top: 1.8rem;
+        padding: 1.1rem 1.2rem 1.5rem;
+        border-radius: 16px;
+        background: rgba(13, 19, 38, 0.93);
+        color: #e7edff;
+        border: 1px solid rgba(137, 196, 244, 0.35);
+        box-shadow: inset 0 0 0 1px rgba(137, 196, 244, 0.25);
+      }
+
+      .diagram-loop h3 {
+        margin: 0 0 0.7rem;
+        color: #9ecbff;
+        font-size: 1.05rem;
+        letter-spacing: 0.015em;
+      }
+
       footer {
         text-align: center;
         padding: 2rem;
@@ -297,6 +412,55 @@
           <li><strong>Feedback loop:</strong> compare predictions with data, capture plots &amp; metrics, and (optionally) send the summary back to the LLM.</li>
           <li><strong>Island-model evolution:</strong> run multiple populations with elitism, jitter-based mutations, and optional LLM-guided structural tweaks.</li>
         </ol>
+      </section>
+
+      <section class="method-diagram">
+        <div class="pill">Visual Overview</div>
+        <h2>Vision-Led Hybrid Automata Discovery</h2>
+        <div class="diagram-top">
+          <div>Scientist / Engineer</div>
+          <span>Prompt design · LLM selection · Evaluation harness · Seed automaton</span>
+        </div>
+        <div class="diagram-columns">
+          <div class="diagram-box">
+            <h3>🧾 Prompt Composer</h3>
+            <p>Configure templates, stitch trajectory context, and inject guard/reset hints for the vision LLM.</p>
+          </div>
+          <div class="diagram-box">
+            <h3>🧠 Vision LLM</h3>
+            <p>Generate candidate automata (modes, dynamics, guards, resets) from plots under schema constraints.</p>
+          </div>
+          <div class="diagram-box">
+            <h3>🔍 Evaluator Pool</h3>
+            <p>Simulate proposals, measure RMSE &amp; nχ², and render overlays + diagnostics for feedback.</p>
+          </div>
+          <div class="diagram-box">
+            <h3>🗂️ Candidate Archive</h3>
+            <p>Persist JSONs, metrics, and plots for island evolution; surface elites for mutation or re-prompting.</p>
+          </div>
+        </div>
+        <div class="diagram-flow-note">
+          <span>👑</span>
+          <div>Iterative loop distills the <strong>best automaton</strong> ready for deployment and verification.</div>
+        </div>
+        <div class="diagram-loop">
+          <h3>Distributed Feedback Loop</h3>
+<pre><code>for island in population:
+    parent = archive.sample()
+    prompt = compose(parent, context)
+    proposal = vision_llm.generate(prompt)
+    template, p0 = parameterise(proposal)
+    fitted = nelder_mead(template, p0)
+    metrics = evaluate(fitted)
+    archive.update(fitted, metrics)
+</code></pre>
+          <div class="media-gallery" style="margin-top: 1.2rem;">
+            <div class="media-frame" style="max-width: 380px;">
+              <img src="build/islands_run/20251007_152104/island_0/gen2_cand1/compare.png" alt="Model vs data overlay" />
+              <div class="media-caption">Best candidate (dashed) vs Duffing data (solid). Island evolution refreshes this view every generation.</div>
+            </div>
+          </div>
+        </div>
       </section>
 
 
