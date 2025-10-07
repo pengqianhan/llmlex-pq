@@ -1,0 +1,1 @@
+传统的hybrid autumata identification 需要 trace segmentation, segment clustering, guard learning, reset learning(Dainarx_code),我的想法是直接用vision LLM 的推理能力，从image中直接推理出hybrid automata。考虑到直接把hybrid automata 包含详系数的mode equation， transition, reset 直接推理出比较难，所以我现参考llmlex 利用vision LLM 做symbolic regression的思路，先用vision LLM 推理出整体框架，再通过拟合或者类似方法来找到最佳系数。请评估这个想法，如果想法可行那么给出详细的方案，如果不可行，请给出原因，然后给我一个新的方案。
