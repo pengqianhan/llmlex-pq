@@ -297,13 +297,15 @@ def load_duffing_npz(
         state_raw = np.array(data["state"], dtype=float)  # shape (1, N)
         input_raw = np.array(data["input"], dtype=float)
         mode_seq = np.array(data["mode"], dtype=int)
+    # print("state_raw.shape: ", state_raw.shape, "input_raw.shape: ", input_raw.shape, "mode_seq.shape: ", mode_seq.shape)
+    # (1, 10001) (1, 10001) (10001,) for duffing
 
     total_steps = state_raw.shape[1]
     if steps is not None:
         total_steps = min(total_steps, steps)
 
-    base_dt = dt_override if dt_override is not None else 0.001
-    stride = max(1, int(stride))
+    base_dt = dt_override if dt_override is not None else 0.001 # default 0.001
+    stride = max(1, int(stride)) # default 5
 
     state_clipped = state_raw[:, :total_steps]
     input_clipped = input_raw[:, :total_steps]
