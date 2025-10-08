@@ -140,15 +140,15 @@ def creat_data(json_path: str, data_path: str, dT: float, times: float):
             print("change_points.shape: ", len(change_points))
             '''
             ball
-            state_data.shape:  (2, 1001)
-            mode_data.shape:  (1001,)
-            input_data.shape:  (0, 1001)
+            state_data.shape:  (2, 10001)
+            mode_data.shape:  (10001,)
+            input_data.shape:  (0, 10001)
             change_points.shape:  22
             ----------------------------
             duffing
-            state_data.shape:  (1, 1001)
-            mode_data.shape:  (1001,)
-            input_data.shape:  (1, 1001)
+            state_data.shape:  (1, 10001)
+            mode_data.shape:  (10001,)
+            input_data.shape:  (1, 10001)
             change_points.shape:  13
             ----------------------------
             '''
@@ -165,5 +165,5 @@ def creat_data(json_path: str, data_path: str, dT: float, times: float):
 
 
 if __name__ == "__main__":
-    # creat_data('automata/non_linear/duffing.json', 'data_duffing', 0.001, 10)
-    creat_data('automata/ATVA/ball.json', 'data_ball', 0.001, 10)
+    creat_data('automata/non_linear/duffing.json', 'data_duffing', 0.001, 10)
+    # creat_data('automata/ATVA/ball.json', 'data_ball', 0.001, 10)
