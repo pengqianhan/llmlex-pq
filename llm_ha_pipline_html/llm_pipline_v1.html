@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Vision-LLM Island Evolution for Hybrid Automata</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f4f6fb;
+        --text: #1e2a3a;
+        --accent: #2f6fed;
+        --accent-light: rgba(47, 111, 237, 0.12);
+        --muted: #4a596d;
+        --card: #ffffff;
+        --card-shadow: 0 18px 40px rgba(16, 35, 71, 0.14);
+        --border: #d9deea;
+        font-family: "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        line-height: 1.6;
+      }
+
+      header {
+        padding: 3.2rem clamp(2rem, 5vw, 6rem);
+        background: linear-gradient(135deg, #1d4ed8 0%, #60a5fa 100%);
+        color: #fff;
+      }
+
+      header h1 {
+        margin: 0 0 0.6rem;
+        font-size: clamp(2.6rem, 5vw, 3.9rem);
+        font-weight: 600;
+        letter-spacing: 0.02em;
+      }
+
+      header p {
+        margin: 0;
+        max-width: 68ch;
+        font-size: clamp(1.05rem, 2.1vw, 1.45rem);
+      }
+
+      main {
+        max-width: 1160px;
+        margin: -2.2rem auto 4.5rem;
+        padding: 0 clamp(1.8rem, 4vw, 3.4rem);
+      }
+
+      section {
+        background: var(--card);
+        border-radius: 18px;
+        padding: clamp(1.9rem, 3vw, 2.7rem);
+        margin-bottom: 1.9rem;
+        border: 1px solid var(--border);
+        box-shadow: var(--card-shadow);
+      }
+
+      h2 {
+        margin: 0;
+        font-size: clamp(1.6rem, 3vw, 2.25rem);
+        color: var(--accent);
+        letter-spacing: 0.015em;
+      }
+
+      h3 {
+        margin: 1.8rem 0 0.6rem;
+        font-size: clamp(1.15rem, 2.2vw, 1.55rem);
+        color: var(--muted);
+        letter-spacing: 0.01em;
+      }
+
+      p {
+        margin: 0 0 1rem;
+        font-size: 1rem;
+      }
+
+      ul,
+      ol {
+        margin: 0 0 1.3rem 1.3rem;
+      }
+
+      li + li {
+        margin-top: 0.45rem;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4rem;
+        background: var(--accent-light);
+        color: var(--accent);
+        border-radius: 999px;
+        padding: 0.35rem 0.95rem;
+        font-weight: 600;
+        font-size: 0.92rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+
+      .grid-two {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.4rem;
+        margin-top: 1.3rem;
+      }
+
+      .card {
+        background: linear-gradient(140deg, #ffffff 0%, #eef3ff 100%);
+        border-radius: 16px;
+        border: 1px solid rgba(47, 111, 237, 0.16);
+        padding: 1.2rem 1.4rem;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
+      }
+
+      .card h3 {
+        margin: 0 0 0.5rem;
+        font-size: 1.05rem;
+        color: var(--accent);
+      }
+
+      pre {
+        background: #10172a;
+        color: #f3f4f6;
+        border-radius: 12px;
+        padding: 1rem 1.2rem;
+        overflow-x: auto;
+        font-size: 0.95rem;
+        line-height: 1.5;
+      }
+
+      code {
+        font-family: "Fira Code", "Source Code Pro", Menlo, Consolas, monospace;
+      }
+
+      .timeline {
+        position: relative;
+        padding-left: 1.6rem;
+        margin: 1.9rem 0 0.6rem;
+        border-left: 3px solid rgba(47, 111, 237, 0.18);
+      }
+
+      .timeline-step {
+        position: relative;
+        margin-bottom: 1.5rem;
+        padding-left: 1rem;
+      }
+
+      .timeline-step::before {
+        content: "";
+        position: absolute;
+        left: -1.56rem;
+        top: 0.35rem;
+        width: 0.8rem;
+        height: 0.8rem;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 0 6px rgba(47, 111, 237, 0.17);
+      }
+
+      .timeline-step h3 {
+        margin: 0 0 0.35rem;
+        color: var(--accent);
+        font-size: 1.1rem;
+      }
+
+      .timeline-step p {
+        margin: 0;
+        color: var(--muted);
+      }
+
+      .island-diagram {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 1.4rem;
+        margin-top: 1.6rem;
+      }
+
+      .island-map {
+        background: radial-gradient(circle at top, rgba(47, 111, 237, 0.12), transparent 60%);
+        border: 1px dashed rgba(47, 111, 237, 0.3);
+        border-radius: 18px;
+        padding: 1.4rem 1.2rem 1.6rem;
+        position: relative;
+      }
+
+      .island-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 0.9rem;
+      }
+
+      .island {
+        background: linear-gradient(135deg, rgba(47, 111, 237, 0.92), #5a8bff);
+        border-radius: 14px;
+        color: #fff;
+        padding: 0.85rem 1rem;
+        text-align: center;
+        font-weight: 600;
+        font-size: 0.95rem;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 12px 24px rgba(24, 52, 104, 0.25);
+      }
+
+      .island::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(160deg, rgba(255, 255, 255, 0.32), transparent 60%);
+        opacity: 0.7;
+        mix-blend-mode: screen;
+      }
+
+      .island span {
+        position: relative;
+        z-index: 1;
+        display: block;
+      }
+
+      .island.active {
+        background: linear-gradient(135deg, #ef4444, #f97316);
+      }
+
+      .island-legend {
+        margin-top: 1.2rem;
+        background: rgba(47, 111, 237, 0.08);
+        border-radius: 12px;
+        padding: 0.9rem 1.1rem;
+        font-size: 0.92rem;
+        color: var(--muted);
+      }
+
+      .flow-diagram {
+        display: flex;
+        gap: 0.8rem;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        margin-top: 1.5rem;
+      }
+
+      .flow-step {
+        background: linear-gradient(135deg, rgba(47, 111, 237, 0.92), rgba(29, 105, 173, 0.95));
+        color: #fff;
+        padding: 0.8rem 1.1rem;
+        border-radius: 999px;
+        font-weight: 600;
+        min-width: 140px;
+        text-align: center;
+        box-shadow: 0 12px 24px rgba(16, 35, 71, 0.24);
+      }
+
+      .flow-arrow {
+        font-size: 1.8rem;
+        color: rgba(47, 111, 237, 0.65);
+        font-weight: 700;
+      }
+
+      .media-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.8rem;
+        align-items: start;
+      }
+
+      .media-frame {
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid rgba(47, 111, 237, 0.18);
+        box-shadow: 0 20px 42px rgba(16, 35, 71, 0.2);
+        background: #0f172a;
+      }
+
+      .media-frame img {
+        width: 100%;
+        display: block;
+      }
+
+      .media-caption {
+        padding: 0.85rem 1rem 1rem;
+        font-size: 0.95rem;
+        color: #e5edff;
+        background: rgba(15, 23, 42, 0.92);
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 1.3rem 0;
+        font-size: 0.95rem;
+      }
+
+      th,
+      td {
+        padding: 0.85rem 1rem;
+        border-bottom: 1px solid var(--border);
+        text-align: left;
+      }
+
+      th {
+        background: rgba(47, 111, 237, 0.12);
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      footer {
+        text-align: center;
+        padding: 2.2rem 1rem;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Vision-LLM Island Evolution for Hybrid Automata</h1>
+      <p>
+        A visual walkthrough of <code>island_ha_vlm.py</code>: load Duffing traces, fit the forcing signal,
+        template a seed automaton, and let a vision-enabled LLM plus island evolution deliver a validated
+        hybrid model.
+      </p>
+    </header>
+
+    <main>
+      <section>
+        <div class="pill">Context</div>
+        <h2>From Plots to Verified Hybrid Automata</h2>
+        <p>
+          The script first calls <code>load_duffing_npz()</code> to down-sample the Duffing benchmark and to
+          fit a compact sinusoidal forcing expression via <code>fit_periodic_input</code>. A two-mode seed
+          from <code>default_seed_json()</code> is parameterised, and <code>evolve_islands()</code>
+          orchestrates fitting, scoring, and LLM-guided structural edits across multiple populations.
+        </p>
+      </section>
+
+      <section>
+        <div class="pill">Script Anatomy</div>
+        <h2>Key Functions Inside <code>island_ha_vlm.py</code></h2>
+        <div class="grid-two">
+          <div class="card">
+            <h3>Data Handling</h3>
+            <ul>
+              <li><code>load_duffing_npz</code> trims trajectories, applies <code>stride</code>, and derives the initial mode/state dictionary.</li>
+              <li><code>fit_periodic_input</code> recovers a concise driving signal <code>u(t)</code> using FFT-based frequency estimation and least squares.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Template &amp; Fitting</h3>
+            <ul>
+              <li><code>extract_param_template</code> safeguards indices/exponents while exposing coefficients as <code>{p_k}</code>.</li>
+              <li><code>fit_params</code> runs SciPy Nelder–Mead with the cost <code>nchi_mean + 0.05 * rmse_mean</code> and simulates through <code>HybridAutomata</code>.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>LLM Interaction</h3>
+            <ul>
+              <li><code>image_to_base64</code> and <code>vlm_propose</code> package comparison plots and metrics for a vision model, returning schema-compliant JSON.</li>
+              <li><code>--use-vlm</code> activates the OpenRouter client; otherwise evolution stays numeric.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Evolution</h3>
+            <ul>
+              <li><code>evaluate_candidate</code> builds <code>Candidate</code> objects: fitted JSON, metrics, comparison plot.</li>
+              <li><code>evolve_islands</code> manages elitism, jitter, migration, and writes <code>best_automaton.json</code> under <code>build/islands_run/&lt;timestamp&gt;</code>.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="pill">Pipeline</div>
+        <h2>End-to-End Flow</h2>
+        <div class="timeline">
+          <div class="timeline-step">
+            <h3>1. Curate Duffing evidence</h3>
+            <p><code>load_duffing_npz()</code> samples <code>data_duffing/test_data0.npz</code>, applies stride/down-sampling, and fits <code>u(t)</code> ≈ cosine+sinusoid to seed the simulator.</p>
+          </div>
+          <div class="timeline-step">
+            <h3>2. Vision LLM proposal</h3>
+            <p>When <code>--use-vlm</code> is set, <code>vlm_propose()</code> digests comparison plots + metrics to return a schema-valid automaton update.</p>
+          </div>
+          <div class="timeline-step">
+            <h3>3. Parameter templating</h3>
+            <p><code>extract_param_template()</code> replaces numeric literals with <code>{p_k}</code>, keeping indices/exponents intact for stable optimisation.</p>
+          </div>
+          <div class="timeline-step">
+            <h3>4. Hybrid simulation fitting</h3>
+            <p><code>fit_params()</code> runs Nelder–Mead, simulating via <code>HybridAutomata</code>, optimising the objective <code>nchi_mean + 0.05 * rmse_mean</code>.</p>
+          </div>
+          <div class="timeline-step">
+            <h3>5. Multi-island selection</h3>
+            <p>Each island keeps its elite candidate, perturbs parameters locally, and ring-migrates best scores whenever <code>gen % migrate_every == 0</code>.</p>
+          </div>
+          <div class="timeline-step">
+            <h3>6. Feedback to the LLM</h3>
+            <p>Comparison plots + metrics are optionally routed back through the vision LLM; without <code>--use-vlm</code> the script falls back to numeric jitter only.</p>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="pill">Island Model</div>
+        <h2>How the Island Strategy Expands the Search</h2>
+        <p>
+          <code>evolve_islands()</code> mirrors the multi-population layout of <code>island.html</code>. Each island
+          re-evaluates the seed JSON, keeps the lowest <code>nchi_mean</code> candidate, and either jitters fitted
+          parameters through the template extractor or asks the vision LLM for a structural edit.
+          Ring migration appends the best automaton from island <code>i</code> to island <code>(i + 1)</code> every
+          <code>migrate_every</code> generations, ensuring cross-pollination without overwriting local elites.
+        </p>
+        <div class="island-diagram">
+          <div class="island-map">
+            <div class="island-grid">
+              <div class="island active"><span>Island α<br />Seed + Vision Prior</span></div>
+              <div class="island"><span>Island β<br />Guard Tweaks</span></div>
+              <div class="island"><span>Island γ<br />Reset Variants</span></div>
+              <div class="island"><span>Island δ<br />Mode Split Merge</span></div>
+              <div class="island"><span>Island ε<br />Parameter Sweep</span></div>
+              <div class="island"><span>Island ζ<br />Archived Elite</span></div>
+            </div>
+            <div class="island-legend">
+              Outer ring arrows (not shown) represent migration. Every <code>--migrate</code> generations we append the best JSON + fitted parameters clockwise; evaluation happens in the next generation cycle.
+            </div>
+          </div>
+          <div class="card">
+            <h3>Distributed Loop</h3>
+            <p>Per generation we execute:</p>
+            <pre><code>for i, pop in enumerate(islands):
+    elite = select_best(pop)
+    new_pop = [elite]
+    for j in range(1, pop_size):
+        if use_vlm:
+            img64 = image_to_base64(elite.plot_path)
+            proposal = vlm_propose(client, model, img64, elite.json, elite.metrics)
+        else:
+            tpl, p0 = extract_param_template(elite.json)
+            noise = normal(scale=0.1, size=len(p0))
+            proposal = apply_params(tpl, p0 * (1 + noise))
+        new_pop.append(evaluate_candidate(proposal))
+    islands[i] = new_pop
+if migrate_every divides gen:
+    bests = [select_best(pop) for pop in islands]
+    for i, elite in enumerate(bests):
+        islands[(i + 1) % num_islands].append(elite)</code></pre>
+            <p>Migration appends each island’s best automaton to its neighbour; elites remain in place to keep converged fits.</p>
+          </div>
+        </div>
+        <div class="flow-diagram">
+          <div class="flow-step">Seed Automaton</div>
+          <div class="flow-arrow">➜</div>
+          <div class="flow-step">Vision Proposal</div>
+          <div class="flow-arrow">➜</div>
+          <div class="flow-step">Local Fitting</div>
+          <div class="flow-arrow">➜</div>
+          <div class="flow-step">Score + Archive</div>
+          <div class="flow-arrow">➜</div>
+          <div class="flow-step">Migrate &amp; Mutate</div>
+        </div>
+      </section>
+
+      <section>
+        <div class="pill">Duffing Example</div>
+        <h2>Concrete Run Configuration</h2>
+        <p>Typical meeting demo command:</p>
+        <pre><code>python island_ha_vlm.py \
+  --data data_duffing/test_data0.npz \
+  --islands 3 --pop 3 --gens 4 \
+  --stride 5 --migrate 2 \
+  --use-vlm</code></pre>
+        <p>Outcome metrics for the best candidate stored at <code>build/islands_run/20251007_152104/island_0/gen2_cand1</code>:</p>
+        <table>
+          <thead>
+            <tr>
+              <th>Evaluation Set</th>
+              <th>RMSE</th>
+              <th>nχ²</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Stride 10 fit slice</td>
+              <td>0.048</td>
+              <td>4.8e-4</td>
+              <td>Used during island evolution.</td>
+            </tr>
+            <tr>
+              <td>Full resolution</td>
+              <td>0.073</td>
+              <td>1.1e-3</td>
+              <td>Held-out validation after convergence.</td>
+            </tr>
+          </tbody>
+        </table>
+        <div class="media-gallery">
+          <div class="media-frame">
+            <img src="build/islands_run/20251007_152104/island_0/gen2_cand1/compare.png" alt="Duffing comparison plot" />
+            <div class="media-caption">
+              Dashed lines: simulated automaton. Solid lines: Duffing data. Islands exchange elites until overlays align.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        <div class="pill">Operational Tips</div>
+        <h2>Keeping the Loop Stable</h2>
+        <div class="grid-two">
+          <div class="card">
+            <h3>Prompt Engineering</h3>
+            <ul>
+              <li>Ground prompts with stride, dt, and the fitted <code>u(t)</code> string so <code>vlm_propose()</code> maintains units.</li>
+              <li>Feed the previous best automaton back into the context block to steer the LLM toward incremental edits.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Parameter Fitting</h3>
+            <ul>
+              <li>Use <code>--stride</code> &gt; 1 for exploration; drop to stride 1 for verification once <code>nchi_mean</code> stabilises.</li>
+              <li>Cap jitter amplitude if parameters collapse (default jitter scale is 0.1 inside the numeric branch).</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Archive Hygiene</h3>
+            <ul>
+              <li>Persist elites under <code>build/islands_run/&lt;timestamp&gt;</code>; the script already writes <code>best_automaton.json</code> for reproducibility.</li>
+              <li>Ensure <code>OPENROUTER_API_KEY</code> and <code>OPENROUTER_BASE_URL</code> are set before toggling <code>--use-vlm</code> in automated runs.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      Prepared for the hybrid automata research sync — Vision LLM Island Evolution v1
+    </footer>
+  </body>
+</html>
