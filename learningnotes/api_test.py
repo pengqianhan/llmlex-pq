@@ -52,8 +52,9 @@ response = client.chat.completions.create(
                     ],
                 }
             ],
-            max_tokens=4096,
+            max_tokens=1028,
             temperature=0.1,
+            reasoning_effort="medium",
         )
 
 print("response: \n", response.choices[0].message.content)
