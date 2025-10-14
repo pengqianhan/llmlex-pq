@@ -28,4 +28,4 @@ from . import fit
 from . import response
 
 # Export key functions for easier access
-from .llm import get_prompt, generate_initial_ha_json
+from .llm import get_prompt, get_prompt_ha, generate_initial_ha_json

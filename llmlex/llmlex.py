@@ -3,7 +3,7 @@ from scipy.optimize import curve_fit
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from llmlex.images import generate_base64_image, generate_base64_image_with_parents
-from llmlex.llm import get_prompt, call_model, async_rate_limit_api_call, clear_rate_limit_lock, check_key_usage, async_call_model
+from llmlex.llm import get_prompt, get_prompt_ha, call_model, async_rate_limit_api_call, clear_rate_limit_lock, check_key_usage, async_call_model
 from llmlex.response import extract_ansatz, fun_convert
 import logging
 import llmlex.fit as fit
@@ -285,7 +285,7 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
         try:
             # Generate the prompt
             logger.debug("Generating prompt")
-            prompt = get_prompt(function_list, imports=imports)
+            prompt = get_prompt_ha(function_list, imports=imports)
             logger.debug(f"Prompt: {prompt}")
             
             # Make API call

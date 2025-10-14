@@ -296,6 +296,83 @@ def get_prompt(function_list=None, imports=None):
     logger.debug(f"Generated prompt with {len(function_list)} functions and {len(imports)} imports")
     return prompt
 
+def get_prompt_ha(var_list, mode_eqs, transitions=None, input_vars=None):
+    """
+    Generates an initial hybrid automaton JSON from lambda-style definitions.
+    This is similar to how get_prompt works for symbolic regression, but for hybrid automata.
+    
+    Args:
+        var_list (list): List of variable names, e.g., ["x1", "x2"]
+        mode_eqs (dict): Dictionary mapping mode_id to equation strings
+                        Example: {
+                            1: ["x2[0]", "-x1[0] - 0.1*x2[0]"],  # [dx1/dt, dx2/dt]
+                            2: ["x2[0]", "-x1[0]**3 - 0.5*x2[0]"]
+                        }
+        transitions (list, optional): List of transition dictionaries
+                                     Example: [{
+                                         "direction": "1 -> 2",
+                                         "condition": "x1[0] >= 1.0",
+                                         "reset": {"x1": [], "x2": []}
+                                     }]
+        input_vars (list, optional): List of input variable names, e.g., ["u"]
+    
+    Returns:
+        dict: A valid JSON object for HybridAutomata.from_json()
+    
+    Example:
+        >>> json_obj = generate_initial_ha_json(
+        ...     var_list=["x1", "x2"],
+        ...     mode_eqs={
+        ...         1: ["x2[0]", "-x1[0] - 0.1*x2[0]"],
+        ...         2: ["x2[0]", "-x1[0]**3 - 0.5*x2[0]"]
+        ...     },
+        ...     transitions=[{
+        ...         "direction": "1 -> 2",
+        ...         "condition": "x1[0] >= 1.0",
+        ...         "reset": {"x1": [], "x2": []}
+        ...     }]
+        ... )
+    """
+    import json
+    
+    logger.debug(f"Generating initial HA JSON with {len(var_list)} variables and {len(mode_eqs)} modes")
+    
+    # Build the mode list
+    mode_list = []
+    for mode_id, equations in mode_eqs.items():
+        # Combine equations into a single string
+        eq_parts = []
+        for i, (var, eq) in enumerate(zip(var_list, equations)):
+            eq_parts.append(f"{var}[1] = {eq}")
+        eq_str = ",".join(eq_parts)
+        
+        mode_list.append({
+            "id": mode_id,
+            "eq": eq_str
+        })
+    
+    # Build the automaton JSON
+    automaton = {
+        "var": ", ".join(var_list),
+        "mode": mode_list
+    }
+    
+    # Add input variables if provided
+    if input_vars is not None:
+        automaton["input"] = ", ".join(input_vars)
+    
+    # Add transitions if provided
+    if transitions is not None:
+        automaton["edge"] = transitions
+    else:
+        # Default: no transitions
+        automaton["edge"] = []
+    
+    result = {"automaton": automaton}
+    
+    logger.debug(f"Generated HA JSON: {json.dumps(result, indent=2)}")
+    return result
+
 def generate_initial_ha_json(var_list, mode_eqs, transitions=None, input_vars=None):
     """
     Generates an initial hybrid automaton JSON from lambda-style definitions.
