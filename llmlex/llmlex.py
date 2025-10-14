@@ -239,6 +239,149 @@ def single_call(client, img, x, y, model="openai/gpt-5-nano-2025-08-07-mini", fu
     else:
         logger.error("Unknown error in single_call")
         raise RuntimeError("Unknown error in single_call")
+def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano-2025-08-07-mini", function_list=None, system_prompt=None, max_retries=3, stats=None, imports=None):
+    """
+    Executes a single call of to a specified llm-model with given parameters and processes the response.
+    Args:
+        client: The openai client object used to interact with the llm.
+        img: The base64 encoded image to use for the model.
+        state_data: The state data to use for the model.
+        input_data: The input data to use for the model.
+        model (str, optional): The model identifier to be used. Defaults to "openai/gpt-5-nano-2025-08-07-mini".
+        function_list (list, optional): A list of functions to be included in the prompt. Defaults to None.
+        system_prompt (str, optional): A system-level prompt to guide the model's behavior. Defaults to None.
+        max_retries (int, optional): Maximum number of retries for parsing errors. Default is 3.
+        stats (APICallStats, optional): Statistics tracking object. If None, a new one will be created.
+        imports (list, optional): A list of import statements to include in the prompt. Defaults to ["import numpy as np"].
+    Returns:
+        dict: A dictionary containing the following keys on success:
+            - "params": The parameters resulting from the curve fitting.
+            - "score": The score of the curve fitting.
+            - "ansatz": The ansatz extracted from the model's response.
+            - "Num_params": The number of parameters in the ansatz.
+            - "response": The raw response from the model.
+            - "prompt": The prompt used in the model call.
+            - "function_list": The list of functions included in the prompt.
+            - "stats": Statistics object (only if created locally).
+        
+        If all attempts fail, it raises the last exception.
+    """
+    logger.info(f"state_data: {state_data.shape}") #(1, 10001)
+    logger.info(f"input_data: {input_data.shape}") #(1, 10001)
+    logger.debug(f"Starting single_call with model={model}, function_list size={len(function_list) if function_list else 0}")
+    
+    # Create a local stats tracker if none provided
+    local_stats = stats is not None
+    if not local_stats:
+        from llmlex.response import APICallStats
+        stats = APICallStats()
+    
+    retry_count = 0
+    last_error = None
+    response = None
+    
+    while retry_count <= max_retries:
+        retry_count += 1
+        try:
+            # Generate the prompt
+            logger.debug("Generating prompt")
+            prompt = get_prompt(function_list, imports=imports)
+            logger.debug(f"Prompt: {prompt}")
+            
+            # Make API call
+            try:
+                # Only make a new API call on the first attempt or if we need to retry with a new call
+                if retry_count == 1 or response is None:
+                    logger.info(f"Calling model {model}")
+                    logger.info(f"system_prompt: {system_prompt}")# None
+                    logger.info(f"prompt: {prompt}")
+                    response = call_model(client, model, img, prompt, system_prompt=system_prompt)
+                stats.stage_success("api_call")
+            except Exception as e:
+                stats.stage_failure("api_call", e)
+                last_error = e
+                logger.error(f"API call failed: {e}")
+                continue
+            
+            # Extract ansatz
+            try:
+                logger.debug("Extracting ansatz from response")
+                logger.info(f"Response: {response}")
+                ansatz, num_params = extract_ansatz(response)
+                logger.info(f"Extracted ansatz: {ansatz[:50]}{'...' if len(ansatz) > 50 else ''} with {num_params} parameters")
+                stats.stage_success("ansatz_extraction")
+            except Exception as e:
+                stats.stage_failure("ansatz_extraction", e)
+                last_error = e
+                logger.debug(f"Ansatz extraction failed: {e}")
+                # For these errors, we might want to try a new API call
+                response = None
+                continue
+            
+            # Convert ansatz to function
+            try:
+                logger.debug("Converting ansatz to function")
+                curve, num_params, lambda_str = fun_convert(ansatz)
+                stats.stage_success("function_conversion")
+            except Exception as e:
+                stats.stage_failure("function_conversion", e)
+                last_error = e
+                logger.debug(f"Function conversion failed: {e}")
+                # For these errors, we might want to try a new API call
+                response = None
+                continue
+            
+            # Fit curve to data
+            try:
+                logger.debug("Fitting curve to data")
+                params, score = fit.fit_curve(x, y, curve, num_params, allow_using_jax=True, curve_str=lambda_str, stats=stats)
+                logger.info(f"Fit result: score={-score}, params={params}")
+                stats.stage_success("curve_fitting")
+            except Exception as e:
+                stats.stage_failure("curve_fitting", e)
+                last_error = e
+                logger.debug(f"Curve fitting in single_call failed: {e}")
+                # For these errors, we might want to try a new API call
+                response = None
+                continue
+
+            # If we get here, everything worked
+            stats.add_success()
+            result = {
+                "params": params,
+                "score": -score,
+                "ansatz": ansatz,
+                "Num_params": num_params,
+                "response": response,
+                "prompt": prompt,
+                "function_list": function_list,
+                "stats": None if local_stats else stats  # Only include stats if we created them locally
+            }
+            logger.debug("single_call completed successfully")
+            return result
+                
+        except Exception as e:
+            # This catch-all shouldn't be reached due to the inner try-except blocks
+            stats.stage_failure("other", e)
+            last_error = e
+            logger.error(f"Unexpected error in single_call: {e}", exc_info=True)
+            try:
+                if response and hasattr(response, 'choices'):
+                    logger.error(f"Response content: {response.choices[0].message.content}")
+            except:
+                logger.error("Could not access response content")
+            response = None
+            continue
+    
+    # If we've exhausted all retries
+    if last_error:
+        logger.error(f"All {max_retries} attempts failed in single_call. Last error: {last_error}")
+        if not local_stats:
+            logger.info(f"Call statistics:\n{stats}")
+        raise last_error
+    else:
+        logger.error("Unknown error in single_call")
+        raise RuntimeError("Unknown error in single_call")
 
 # @async_rate_limit_api_call
 # async def async_call_model(client, model, image, prompt, system_prompt=None):
