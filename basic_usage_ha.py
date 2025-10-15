@@ -9,12 +9,10 @@ load_dotenv() # 加载.env文件中的环境变量
 
 # Set up API client
 client = openai.OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=os.getenv("OPENROUTER_API_KEY") if os.getenv("OPENROUTER_API_KEY") else "<<<<<<your_api_key>>>>>>>", 
+    base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+    api_key=os.getenv("GEMINI_API_KEY") if os.getenv("GEMINI_API_KEY") else "<<<<<<your_api_key>>>>>>>", 
 )
-# model_name = "openai/gpt-5-nano-2025-08-07"
-# model_name = "moonshotai/kimi-vl-a3b-thinking:free" # not working
-model_name = "qwen/qwen2.5-vl-32b-instruct:free"
+model_name = "models/gemini-flash-lite-latest"
 # Generate data
 # x = np.linspace(-1, 1, 50)
 # y = np.sin(np.pi * x) + 0.1 * np.random.randn(50)
