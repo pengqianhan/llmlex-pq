@@ -374,12 +374,17 @@ def get_prompt_ha(state_data, input_data, imports=None):
     if input_vars is not None:
         automaton["input"] = ", ".join(input_vars)
     
-    # Add transitions if provided
-    if transitions is not None:
-        automaton["edge"] = transitions
-    else:
-        # Default: no transitions
-        automaton["edge"] = []
+    edges = []
+    for i in range(1,len(mode_list)+1):
+        mode_id_from = i
+        mode_id_to = i+1 if i < len(mode_list) else 1
+        edges.append({
+            "direction": f"{mode_id_from} -> {mode_id_to}",
+            "condition": "*params",
+            "reset": {var_list[j]: ["", "x[1]"] for j in range(num_state_vars)}
+        })
+    automaton["edge"] = edges
+    logger.info(f"edges: {edges}")
     
     result = {"automaton": automaton}
     

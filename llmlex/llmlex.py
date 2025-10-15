@@ -286,7 +286,7 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
             # Generate the prompt
             logger.debug("Generating prompt")
             prompt = get_prompt_ha(state_data, input_data, imports=imports)
-            logger.debug(f"Prompt: {prompt}")
+            logger.info(f"Prompt:\n {prompt}")
             
             # Make API call
             try:
