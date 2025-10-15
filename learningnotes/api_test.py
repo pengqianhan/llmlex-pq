@@ -18,9 +18,9 @@ client = openai.OpenAI(
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
     api_key=os.getenv("GEMINI_API_KEY") if os.getenv("GEMINI_API_KEY") else "<<<<<<your_api_key>>>>>>>", 
 )
-model = "models/gemini-flash-lite-latest"
+model_name = "models/gemini-flash-lite-latest"
 
-print("Model: ", model)
+print("Model: ", model_name)
 system_prompt = ("You are a symbolic regression expert. Analyze the data in the image and provide an improved mathematical ansatz. "
                          "Respond with ONLY the ansatz formula, without any explanation or commentary. Ensure it is in valid python. You may use numpy functions. "
                          "params is a list of parameters that can be of any length or complexity. "
@@ -34,7 +34,7 @@ fig, ax = plt.subplots()
 ax.scatter(x, y)
 image = llmlex.images.generate_base64_image(fig, ax, x, y)
 response = client.chat.completions.create(
-            model=model,
+            model=model_name,
             messages=[
                 { "role": "system", 
                  "content": system_prompt},
@@ -53,8 +53,8 @@ response = client.chat.completions.create(
                 }
             ],
             max_tokens=1028,
-            temperature=0.1,
-            reasoning_effort="medium",
+            # temperature=0.1,
+            # reasoning_effort="medium",
         )
 
 print("response: \n", response.choices[0].message.content)
