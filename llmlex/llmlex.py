@@ -143,7 +143,7 @@ def single_call(client, img, x, y, model="openai/gpt-5-nano-2025-08-07-mini", fu
             # Generate the prompt
             logger.debug("Generating prompt")
             prompt = get_prompt(function_list, imports=imports)
-            logger.debug(f"Prompt: {prompt}")
+            logger.info(f"Prompt:\n {prompt}")
             
             # Make API call
             try:
@@ -285,7 +285,7 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
         try:
             # Generate the prompt
             logger.debug("Generating prompt")
-            prompt = get_prompt_ha(function_list, imports=imports)
+            prompt = get_prompt_ha(state_data, input_data, imports=imports)
             logger.debug(f"Prompt: {prompt}")
             
             # Make API call

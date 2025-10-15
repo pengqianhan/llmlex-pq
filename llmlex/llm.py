@@ -272,7 +272,7 @@ def get_prompt(function_list=None, imports=None):
     Returns:
         str: A string containing the generated user prompt with lambda function definitions.
     """
-    logger.debug(f"Generating prompt with function_list: {function_list}, imports: {imports}")
+    logger.info(f"Generating prompt with function_list: {function_list}, imports: {imports}")
     
     # Use default if no function list provided
     if function_list is None:
@@ -296,7 +296,7 @@ def get_prompt(function_list=None, imports=None):
     logger.debug(f"Generated prompt with {len(function_list)} functions and {len(imports)} imports")
     return prompt
 
-def get_prompt_ha(var_list, mode_eqs, transitions=None, input_vars=None):
+def get_prompt_ha(state_data, input_data, imports=None):
     """
     Generates an initial hybrid automaton JSON from lambda-style definitions.
     This is similar to how get_prompt works for symbolic regression, but for hybrid automata.
@@ -334,8 +334,21 @@ def get_prompt_ha(var_list, mode_eqs, transitions=None, input_vars=None):
         ... )
     """
     import json
+    num_state_vars = state_data.shape[0]
+    num_input_vars = input_data.shape[0]
+    var_list = [f"x{i+1}" for i in range(num_state_vars)]
+    input_vars = [f"u{i+1}" for i in range(num_input_vars)]
+    logger.info(f"var_list: {var_list}")
+    logger.info(f"input_vars: {input_vars}")
     
-    logger.debug(f"Generating initial HA JSON with {len(var_list)} variables and {len(mode_eqs)} modes")
+    # For initial hybrid automaton, use only one mode, the equations use the lambda functions
+    mode_eqs = {
+        1: [f"{var_list[i]}[1] = lambda {var_list[j]}, *params: " for i in range(num_state_vars) for j in range(num_state_vars)]
+    }
+    logger.info(f"mode_eqs: {mode_eqs}")
+
+
+
     
     # Build the mode list
     mode_list = []
