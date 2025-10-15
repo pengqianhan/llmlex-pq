@@ -13,6 +13,7 @@ model_name = "models/gemini-flash-lite-latest"
 
 response = client.chat.completions.create(
     model=model_name,
+    reasoning_effort="high",# default is "medium"
     messages=[
         {"role": "user", "content": "Explain how AI works in a few words"},
     ],

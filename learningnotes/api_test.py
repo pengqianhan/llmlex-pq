@@ -35,6 +35,7 @@ ax.scatter(x, y)
 image = llmlex.images.generate_base64_image(fig, ax, x, y)
 response = client.chat.completions.create(
             model=model_name,
+            # reasoning_effort="high",# default is "medium"
             messages=[
                 { "role": "system", 
                  "content": system_prompt},
@@ -53,8 +54,8 @@ response = client.chat.completions.create(
                 }
             ],
             max_tokens=1028,
-            # temperature=0.1,
-            # reasoning_effort="medium",
+            temperature=1,# default is 1
+            
         )
 
 print("response: \n", response.choices[0].message.content)
