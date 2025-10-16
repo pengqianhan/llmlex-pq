@@ -356,7 +356,7 @@ def get_prompt_ha(state_data, input_data, imports=None):
         # Combine equations into a single string
         eq_parts = []
         for i, (var, eq) in enumerate(zip(var_list, equations)):
-            eq_parts.append(f"{var}[1] = {eq}")
+            eq_parts.append(f"{eq}")
         eq_str = ",".join(eq_parts)
         
         mode_list.append({
