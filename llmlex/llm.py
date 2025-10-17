@@ -340,6 +340,16 @@ def get_prompt_ha(state_data, input_data, imports=None):
     input_vars = [f"u{i+1}" for i in range(num_input_vars)]
     logger.info(f"var_list: {var_list}")
     logger.info(f"input_vars: {input_vars}")
+
+    automaton_comments = {"var": "// variables list, separated by ','",
+                          "input": "// input variables list, separated by ','",
+                          "mode": "// mode list of the hybrid automaton",
+                          "id": "// mode id",
+                          "eq": "// ode of each variable in the mode, separated by ','\n// cannot contain variables that are not defined in var, x[k] represents the k-th derivative of x\n// the left side of the equal sign is the highest order derivative, the right side is the expression, does not support implicit functions\n// must provide ode for each variable",
+                          "edge": "// edge list",
+                          "direction": "// edge from mode u to mode v, represented as 'u -> v'",
+                          "condition": "// transition condition, cannot contain variables that are not defined in var",
+                          "reset": "// reset mapping for each variable, each variable has a list of reset values"}
     
     # For initial hybrid automaton, use only one mode, the equations use the lambda functions
     mode_eqs = {
@@ -387,6 +397,8 @@ def get_prompt_ha(state_data, input_data, imports=None):
     logger.info(f"edges: {edges}")
     
     result = {"automaton": automaton}
+    # add comments to the result
+    # result["automaton"] = {**automaton_comments, **result["automaton"]}
     
     logger.debug(f"Generated HA JSON: {json.dumps(result, indent=2)}")
     return result

@@ -14,6 +14,7 @@ import time
 import re
 from llmlex.response import APICallStats
 from llmlex.fit import get_n_chi_squared
+import json
 
 # Check if nest_asyncio is available
 try:
@@ -286,8 +287,10 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
             # Generate the prompt
             logger.debug("Generating prompt")
             prompt = get_prompt_ha(state_data, input_data, imports=imports)
+            # save the prompt to a json file
+            with open('prompts/prompt_ha.json', 'w') as f:
+                json.dump(prompt, f, indent=2)
             logger.info(f"Prompt:\n {prompt}")
-            
             # Make API call
             try:
                 # Only make a new API call on the first attempt or if we need to retry with a new call
