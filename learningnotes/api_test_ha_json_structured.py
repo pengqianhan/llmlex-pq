@@ -14,39 +14,39 @@ load_dotenv()
 # ============ Pydantic 模型定义（符合 json_readme.md 格式）============
 
 class ModeDefinition(BaseModel):
-    """定义单个模式（mode）"""
-    id: int = Field(description="模式 ID，整数")
-    eq: str = Field(description="该模式下各变量的 ODE，以逗号隔开。例如 'x1[1] = 1, x2[2] = -3 * x2[1] - 25 * x2[0] + 25'。等号左侧为最高阶微分，右侧是表达式")
+    """Define a single mode"""
+    id: int = Field(description="Mode ID, integer")
+    eq: str = Field(description="ODE of each variable in the mode, separated by commas. Example: 'x1[1] = 1, x2[2] = -3 * x2[1] - 25 * x2[0] + 25'. The left side of the equal sign is the highest order derivative, the right side is the expression")
 
 class EdgeTransition(BaseModel):
-    """定义模式之间的转换边（无 reset 字段）"""
-    direction: str = Field(description="转换方向，格式为 'u -> v'，从 mode u 到 mode v")
-    condition: str = Field(description="转换条件（guard），不能出现 var 中未定义的变量。例如 'x1 >= 5'")
+    """Define transition edges between modes (no reset field)"""
+    direction: str = Field(description="Transition direction, format 'u -> v', from mode u to mode v")
+    condition: str = Field(description="Transition condition (guard), cannot contain variables not defined in var. Example: 'x1 >= 5'")
 
 class AutomationStructure(BaseModel):
-    """混合自动机的核心结构（注意：键名是 automation 而非 automaton）"""
-    var: str = Field(description="变量列表，用逗号隔开，例如 'x1, x2'")
-    input: str = Field(description="输入变量列表，用逗号隔开，例如 'u1, u2'")
-    mode: List[ModeDefinition] = Field(description="自动机的模式列表")
-    edge: List[EdgeTransition] = Field(description="模式之间的转换边列表")
+    """Core structure of the hybrid automaton (Note: key name is 'automation' not 'automaton')"""
+    var: str = Field(description="Variable list, separated by commas, example: 'x1, x2'")
+    input: str = Field(description="Input variable list, separated by commas, example: 'u1, u2'")
+    mode: List[ModeDefinition] = Field(description="List of automaton modes")
+    edge: List[EdgeTransition] = Field(description="List of transition edges between modes")
 
 class ConfigSettings(BaseModel):
-    """拟合差分方程的配置参数"""
-    dt: float = Field(default=0.001, description="离散时间，默认0.001")
-    total_time: float = Field(default=10.0, description="采样总时间，默认10")
-    dim: int = Field(default=3, description="差分方程的维度，默认3")
-    # window_size: int = Field(default=10, description="滑动窗口大小，默认10")
-    # clustering_method: str = Field(default="fit", description="聚类方法，默认fit，有fit和dis两种选项")
-    # minus: bool = Field(default=False, description="是否最小化阶数，默认为false")
-    # need_bias: bool = Field(default=True, description="是否需要常数项，默认为true")
-    # kernel: str = Field(default="linear", description="SVM核函数，默认为linear")
-    # other_items: str = Field(default="", description="差分方程的其他非线性项或交叉项，默认为空")
+    """Configuration parameters for fitting the difference equation"""
+    dt: float = Field(default=0.001, description="Discrete time, default 0.001")
+    total_time: float = Field(default=10.0, description="Sampling total time, default 10")
+    dim: int = Field(default=3, description="Dimension of the difference equation, default 3")
+    # window_size: int = Field(default=10, description="Sliding window size, default 10")
+    # clustering_method: str = Field(default="fit", description="Clustering method, default fit, options are fit and dis")
+    # minus: bool = Field(default=False, description="Whether to minimize order, default false")
+    # need_bias: bool = Field(default=True, description="Whether to include constant term, default true")
+    # kernel: str = Field(default="linear", description="SVM kernel function, default linear")
+    # other_items: str = Field(default="", description="Other nonlinear or cross terms for the difference equation, default empty")
 
 class HybridAutomatonJSON(BaseModel):
-    """完整的混合自动机 JSON 结构"""
-    automation: AutomationStructure = Field(description="自动机结构")
-    init_state: List[Dict[str, Any]] = Field(description="初始状态列表，每个状态包含 mode 和各变量的初始值")
-    config: ConfigSettings = Field(description="拟合差分方程的配置参数")
+    """Complete hybrid automaton JSON structure"""
+    automation: AutomationStructure = Field(description="Automaton structure")
+    init_state: List[Dict[str, Any]] = Field(description="Initial state list, each state contains mode and initial values of each variable")
+    config: ConfigSettings = Field(description="Configuration parameters for fitting the difference equation")
 
 # ============ API 调用 ============
 
