@@ -296,7 +296,7 @@ def get_prompt(function_list=None, imports=None):
     logger.debug(f"Generated prompt with {len(function_list)} functions and {len(imports)} imports")
     return prompt
 
-def get_prompt_ha(state_data, input_data, imports=None):
+def get_prompt_ha(state_data, input_data, imports=None, include_comments=False):
     """
     Generates an initial hybrid automaton JSON from lambda-style definitions.
     This is similar to how get_prompt works for symbolic regression, but for hybrid automata.
@@ -313,11 +313,12 @@ def get_prompt_ha(state_data, input_data, imports=None):
                                          "direction": "1 -> 2",
                                          "condition": "x1[0] >= 1.0",
                                          "reset": {"x1": [], "x2": []}
-                                     }]
+                                    }]
         input_vars (list, optional): List of input variable names, e.g., ["u"]
+        include_comments (bool, optional): When True, append inline comments describing each field.
     
     Returns:
-        dict: A valid JSON object for HybridAutomata.from_json()
+        str: A JSON string representing the automaton. Comments are included when requested.
     
     Example:
         >>> json_obj = generate_initial_ha_json(
@@ -338,26 +339,32 @@ def get_prompt_ha(state_data, input_data, imports=None):
     num_input_vars = input_data.shape[0]
     var_list = [f"x{i+1}" for i in range(num_state_vars)]
     input_vars = [f"u{i+1}" for i in range(num_input_vars)]
-    logger.info(f"var_list: {var_list}")
-    logger.info(f"input_vars: {input_vars}")
+    # logger.info(f"var_list: {var_list}")
+    # logger.info(f"input_vars: {input_vars}")
 
-    automaton_comments = {"var": "// variables list, separated by ','",
-                          "input": "// input variables list, separated by ','",
-                          "mode": "// mode list of the hybrid automaton",
-                          "id": "// mode id",
-                          "eq": "// ode of each variable in the mode, separated by ','\n// cannot contain variables that are not defined in var, x[k] represents the k-th derivative of x\n// the left side of the equal sign is the highest order derivative, the right side is the expression, does not support implicit functions\n// must provide ode for each variable",
-                          "edge": "// edge list",
-                          "direction": "// edge from mode u to mode v, represented as 'u -> v'",
-                          "condition": "// transition condition, cannot contain variables that are not defined in var",
-                          "reset": "// reset mapping for each variable, each variable has a list of reset values"}
+    automaton_comments = {
+        "var": "// variables list, separated by ','",
+        "input": "// input variables list, separated by ','",
+        "mode": [
+            {
+                "id": "// mode id",
+                "eq": "// ode of each variable in the mode, separated by ','\n// cannot contain variables that are not defined in var, x[k] represents the k-th derivative of x\n// the left side of the equal sign is the highest order derivative, the right side is the expression, does not support implicit functions\n// must provide ode for each variable"
+            }
+        ],
+        "edge": [
+            {
+                "direction": "// edge from mode u to mode v, represented as 'u -> v'",
+                "condition": "// transition condition, cannot contain variables that are not defined in var",
+                "reset": "// reset mapping for each variable, each variable has a list of reset values"
+            }
+        ]
+    }
     
     # For initial hybrid automaton, use only one mode, the equations use the lambda functions
     mode_eqs = {
         1: [f"{var_list[i]}[1] = lambda {var_list[j]}, *params: " for i in range(num_state_vars) for j in range(num_state_vars)]
     }
     logger.info(f"mode_eqs: {mode_eqs}")
-
-
 
     
     # Build the mode list
@@ -397,11 +404,54 @@ def get_prompt_ha(state_data, input_data, imports=None):
     logger.info(f"edges: {edges}")
     
     result = {"automaton": automaton}
-    # add comments to the result
-    # result["automaton"] = {**automaton_comments, **result["automaton"]}
+    # add comments to the result if enabled
+    result_json = json.dumps(result, indent=2)
+    if not include_comments:
+        logger.debug(f"Generated HA JSON without comments:\n{result_json}")
+        return result_json
+
+    line_comments = {
+        '"automaton": {': "// automaton",
+        '"var": ': automaton_comments["var"],
+        '"mode": [': "// mode list",
+        '"id": ': automaton_comments["mode"][0]["id"],
+        '"eq": ': automaton_comments["mode"][0]["eq"],
+        '"direction": ': automaton_comments["edge"][0]["direction"],
+        '"condition": ': automaton_comments["edge"][0]["condition"],
+        '"reset": ': automaton_comments["edge"][0]["reset"],
+    }
+
+    if "input" in automaton:
+        line_comments['"input": '] = automaton_comments["input"]
+
+    annotated_lines = []
+    for line in result_json.splitlines():
+        stripped = line.lstrip()
+        indent = line[:len(line) - len(stripped)]
+        comment = None
+        for key, comment_text in line_comments.items():
+            if stripped.startswith(key):
+                comment = comment_text
+                break
+
+        if comment is None:
+            annotated_lines.append(line)
+            continue
+
+        if "\n" not in comment:
+            annotated_lines.append(f"{line} {comment.strip()}")
+        else:
+            annotated_lines.append(line)
+            for comment_line in comment.split("\n"):
+                if comment_line.strip():
+                    annotated_lines.append(f"{indent}{comment_line.strip()}")
+
+    result_with_comments = "\n".join(annotated_lines)
     
-    logger.debug(f"Generated HA JSON: {json.dumps(result, indent=2)}")
-    return result
+    logger.debug(f"Generated HA JSON with comments:\n{result_with_comments}")
+    return result_with_comments
+
+    
 
 def generate_initial_ha_json(var_list, mode_eqs, transitions=None, input_vars=None):
     """
@@ -552,6 +602,113 @@ def call_model(client, model, image, prompt, system_prompt=None):
         # Log and re-raise any exceptions
         logger.error(f"Error calling model {model}: {e}", exc_info=True)
         raise
+
+@rate_limit_api_call
+def call_model_ha(client, model, image, prompt, system_prompt=None):
+    """
+    In initiates a single call of the llm given an image. 
+    Args:
+        client (object): The client object used to interact with the model.
+        model (str): The name or identifier of the model to be used.
+        image (str): The image data encoded in base64 format.
+        prompt (str): The text prompt provided by the user.
+        system_prompt (str, optional): The system prompt to guide the model's response. If none provided the default prompt is used"
+    Returns:
+        dict: The response from the model, typically containing the generated text or other relevant information.
+    """
+
+    logger.debug(f"Calling model {model}")
+    
+    # Set default system prompt if not provided
+    if system_prompt is None:
+        #system_prompt = ("Give an improved ansatz to the list for the image. Follow on from the users text with no explaining."
+        #                 "Params can be any length. If there's some noise in the data, give preference to simpler functions"
+        # THIS IS THE SYSTEM PROMPT FOR THE SYNC MODEL - see LLMLEx.py for the async version
+        system_prompt = ("You are a hybrid automaton expert. Analyze the data in the image and provide an improved mathematical skeleton of the hybrid automaton. "
+                         "params is a list of parameters that can be of any length or complexity. "
+                         "Respond with ONLY the JSON object, without any explanation or commentary." "\n")
+                         #"Since the data may contain noise, prioritize simpler, more elegant functions that capture the underlying pattern rather than fitting every point. "
+        JSON_comments = """
+        ```json
+        {
+            "automaton": { // automaton
+                "var": "x1, x2, ... , xn", // variables list, separated by ','
+                "input": "u1, u2, ... , un", // input variables list, separated by ','
+                "mode": [ // mode list
+                    {
+                        "id": 1, // mode id
+                        "eq": ""
+                        // ode of each variable in the mode, separated by ','
+                        // cannot contain variables that are not defined in var, x[k] represents the k-th derivative of x
+                        // the left side of the equal sign is the highest order derivative, the right side is the expression, does not support implicit functions
+                        // must provide ode for each variable
+                    }
+                    ...
+                ],
+                "edge": [
+                    {
+                        "direction": "", // edge from mode u to mode v, represented as 'u -> v'
+                        "condition": "", // transition condition, cannot contain variables that are not defined in var
+                        "reset": { // reset mapping for each variable, each variable has a list of reset values
+                            "x1": ["", ],
+                            "x2": ["", ],
+                            ...
+                        }
+                    }
+                    ...
+                ]
+            }
+        }
+        ```
+        """
+        system_prompt += JSON_comments
+        logger.debug("Using default system prompt: \n" + system_prompt)
+    # Track image size for debugging purposes
+    image_size = len(image) if image else 0
+    logger.debug(f"Image size: {image_size} characters (base64)")
+    logger.debug(f"Prompt length: {len(prompt)} characters")
+    
+    try:
+        # Create and send the API request
+        logger.debug("Creating chat completion request")
+        response = client.chat.completions.create(
+            model=model,
+            messages=[
+                { "role": "system", 
+                 "content": system_prompt},
+                {
+                    "role": "user",
+                    "content": [
+                        {
+                            "type": "image_url",
+                            "image_url": {"url": f"data:image/png;base64,{image}"},
+                        },
+                        {
+                            "type": "text",
+                            "text": prompt,
+                        },
+                    ],
+                }
+            ],
+            max_tokens=4096,
+        )
+        
+        # Log response info
+        try:
+            token_usage = response.usage.total_tokens if hasattr(response, 'usage') else 'unknown'
+            logger.debug(f"Model response received. Total tokens: {token_usage}")
+            logger.debug(f"Response finish reason: {response.choices[0].finish_reason if hasattr(response.choices[0], 'finish_reason') else 'unknown'}")
+        except:
+            logger.debug("Could not access token usage information")
+        
+        return response
+        
+    except Exception as e:
+        # Log and re-raise any exceptions
+        logger.error(f"Error calling model {model}: {e}", exc_info=True)
+        raise
+
+
 
 @async_rate_limit_api_call
 async def async_call_model(client, model, image, prompt, system_prompt=None):

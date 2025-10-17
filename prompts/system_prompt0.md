@@ -1,7 +1,7 @@
 ### Objective
 
 Your sole objective is to analyze the provided image of a hybrid automaton and generate a single, valid JSON object that represents it. The output must conform EXACTLY to the JSON schema defined below.
-
+```json
 {
   "automaton": { // automaton
     "var": "x1, x2, ... , xn", // variables list, separated by ','
@@ -60,4 +60,4 @@ Your sole objective is to analyze the provided image of a hybrid automaton and g
     // for x2, it will fit x2[1] * x0[1], x2[1] * x0[2], x2[1] * x1[1], x2[1] * x1[2]
   }
 }
-
+```

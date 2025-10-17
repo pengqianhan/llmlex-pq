@@ -5,6 +5,7 @@ Your sole objective is to analyze the provided image of a hybrid automaton and g
 {
   "automaton": { // automaton
     "var": "x1, x2, ... , xn", // variables list, separated by ','
+    "input": "u1, u2, ... , un", // input variables list, separated by ','
     "mode": [ // mode list
       {
         "id": 1, // mode id

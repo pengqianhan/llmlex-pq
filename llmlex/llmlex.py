@@ -3,7 +3,7 @@ from scipy.optimize import curve_fit
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from llmlex.images import generate_base64_image, generate_base64_image_with_parents
-from llmlex.llm import get_prompt, get_prompt_ha, call_model, async_rate_limit_api_call, clear_rate_limit_lock, check_key_usage, async_call_model
+from llmlex.llm import get_prompt, get_prompt_ha, call_model,call_model_ha, async_rate_limit_api_call, clear_rate_limit_lock, check_key_usage, async_call_model
 from llmlex.response import extract_ansatz, fun_convert
 import logging
 import llmlex.fit as fit
@@ -15,6 +15,7 @@ import re
 from llmlex.response import APICallStats
 from llmlex.fit import get_n_chi_squared
 import json
+from pathlib import Path
 
 # Check if nest_asyncio is available
 try:
@@ -254,6 +255,7 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
         max_retries (int, optional): Maximum number of retries for parsing errors. Default is 3.
         stats (APICallStats, optional): Statistics tracking object. If None, a new one will be created.
         imports (list, optional): A list of import statements to include in the prompt. Defaults to ["import numpy as np"].
+        include_prompt_comments (bool, optional): When True, include inline comments in the generated prompt JSON.
     Returns:
         dict: A dictionary containing the following keys on success:
             - "params": The parameters resulting from the curve fitting.
@@ -288,17 +290,21 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
             logger.debug("Generating prompt")
             prompt = get_prompt_ha(state_data, input_data, imports=imports)
             # save the prompt to a json file
-            with open('prompts/prompt_ha.json', 'w') as f:
-                json.dump(prompt, f, indent=2)
-            logger.info(f"Prompt:\n {prompt}")
+            prompt_path = Path('prompts/prompt_ha.json')
+            if isinstance(prompt, str):
+                prompt_path.write_text(prompt)
+            else:
+                with prompt_path.open('w') as f:
+                    json.dump(prompt, f, indent=2)
             # Make API call
             try:
                 # Only make a new API call on the first attempt or if we need to retry with a new call
                 if retry_count == 1 or response is None:
                     logger.info(f"Calling model {model}")
-                    logger.info(f"system_prompt: {system_prompt}")# None
-                    logger.info(f"prompt: {prompt}")
-                    response = call_model(client, model, img, prompt, system_prompt=system_prompt)
+                    logger.debug(f"system_prompt: {system_prompt}")# None
+                    logger.debug(f"prompt: {prompt}")
+                    response = call_model_ha(client, model, img, prompt, system_prompt=system_prompt)
+                    # print(response.choices[0].message.content)
                 stats.stage_success("api_call")
             except Exception as e:
                 stats.stage_failure("api_call", e)
