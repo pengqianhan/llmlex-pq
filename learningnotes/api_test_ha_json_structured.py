@@ -139,7 +139,7 @@ Important format notes:
 """
 
     # load system prompt
-    system_prompt_md = open('prompts/system_prompt0.md', 'r').read()
+    system_prompt_md = open('prompts/system_prompt1.md', 'r').read()
     system_prompt = system_prompt_md
     print(system_prompt)
     user_prompt = """Please analyze the hybrid system data in the image and generate the corresponding hybrid automaton JSON.
