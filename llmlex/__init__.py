@@ -26,6 +26,7 @@ from . import images
 from . import llm
 from . import fit
 from . import response
+from . import json_output
 
 # Export key functions for easier access
 from .llm import get_prompt, get_prompt_ha, generate_initial_ha_json
