@@ -795,17 +795,14 @@ def call_model_ha_json(client, model, image, prompt, system_prompt=None):
             if parsed is not None:
                 try:
                     json_content = json.dumps(parsed.model_dump(), ensure_ascii=False)
-                    logger.info(f"JSON content: {json_content}")
-                    if getattr(message, "content", None) in (None, "", []):
-                        message.content = json_content
+                    return json_content
                 except Exception as exc:
                     logger.debug(f"Failed to serialize structured response to JSON string: {exc}")
-
-        return response
+                    return None
 
     except Exception as e:
         logger.error(f"Error calling structured model {model}: {e}", exc_info=True)
-        raise
+        return None
 
 
 
