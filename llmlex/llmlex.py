@@ -3,7 +3,7 @@ from scipy.optimize import curve_fit
 from tqdm import tqdm
 import matplotlib.pyplot as plt
 from llmlex.images import generate_base64_image, generate_base64_image_with_parents
-from llmlex.llm import get_prompt, get_prompt_ha, call_model,call_model_ha, async_rate_limit_api_call, clear_rate_limit_lock, check_key_usage, async_call_model
+from llmlex.llm import get_prompt, get_prompt_ha, call_model,call_model_ha, call_model_ha_json, async_rate_limit_api_call, clear_rate_limit_lock, check_key_usage, async_call_model
 from llmlex.response import extract_ansatz, fun_convert
 import logging
 import llmlex.fit as fit
@@ -303,8 +303,10 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
                     logger.info(f"Calling model {model}")
                     logger.debug(f"system_prompt: {system_prompt}")# None
                     logger.debug(f"prompt: {prompt}")
-                    response = call_model_ha(client, model, img, prompt, system_prompt=system_prompt)
-                    # print(response.choices[0].message.content)
+                    # response = call_model_ha(client, model, img, prompt, system_prompt=system_prompt)
+                    response = call_model_ha_json(client, model, img, prompt, system_prompt=system_prompt)
+                    logger.info(f"Response: {response}")
+                    print(response.choices[0].message.content)
                 stats.stage_success("api_call")
             except Exception as e:
                 stats.stage_failure("api_call", e)

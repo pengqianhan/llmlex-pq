@@ -5,6 +5,9 @@ import time
 import os
 import threading
 from functools import wraps
+import json
+
+from llmlex.json_output import HybridAutomatonJSON
 
 # Get module logger
 logger = logging.getLogger("LLMLEx.llm")
@@ -706,6 +709,102 @@ def call_model_ha(client, model, image, prompt, system_prompt=None):
     except Exception as e:
         # Log and re-raise any exceptions
         logger.error(f"Error calling model {model}: {e}", exc_info=True)
+        raise
+
+@rate_limit_api_call
+def call_model_ha_json(client, model, image, prompt, system_prompt=None):
+    """
+    Call the HA model using structured JSON output.
+    Args mirror call_model_ha but the response is parsed into HybridAutomatonJSON schema.
+    """
+    logger.debug(f"Calling model {model} with structured JSON output")
+
+    if system_prompt is None:
+        system_prompt = (
+            "You are a hybrid automaton expert. Analyze the data in the supplied image and describe the system "
+            "using the HybridAutomatonJSON schema. Respond ONLY with a JSON object that matches the schema:\n"
+            "- Top-level key: automation\n"
+            "- automation.var: comma separated variables like 'x1, x2'\n"
+            "- automation.input: comma separated inputs or empty string if none\n"
+            "- automation.mode: list with id and eq describing ODEs for each variable\n"
+            "- automation.edge: list with direction 'u -> v' and condition strings\n"
+            "- init_state: list of states including mode and initial variable values\n"
+            "- config: configuration values such as dt, total_time, dim\n"
+        )
+        logger.debug("Using default structured system prompt:\n%s", system_prompt)
+
+    image_size = len(image) if image else 0
+    logger.debug(f"Image size: {image_size} characters (base64)")
+    logger.debug(f"Prompt length: {len(prompt)} characters")
+
+    messages = [
+        {"role": "system", "content": system_prompt},
+        {
+            "role": "user",
+            "content": [
+                {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{image}"}} if image else {
+                    "type": "text",
+                    "text": "No image provided."
+                },
+                {"type": "text", "text": prompt},
+            ],
+        },
+    ]
+
+    try:
+        if (
+            hasattr(client, "beta")
+            and hasattr(client.beta, "chat")
+            and hasattr(client.beta.chat, "completions")
+            and hasattr(client.beta.chat.completions, "parse")
+        ):
+            logger.debug("Creating structured chat completion request via beta API")
+            response = client.beta.chat.completions.parse(
+                model=model,
+                messages=messages,
+                response_format=HybridAutomatonJSON,
+            )
+        else:
+            logger.debug("Structured API not available; falling back to standard chat completion")
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                max_tokens=4096,
+            )
+
+        try:
+            token_usage = response.usage.total_tokens if hasattr(response, "usage") else "unknown"
+            logger.debug(f"Model response received. Total tokens: {token_usage}")
+            if (
+                hasattr(response, "choices")
+                and response.choices
+                and hasattr(response.choices[0], "finish_reason")
+            ):
+                logger.debug(f"Response finish reason: {response.choices[0].finish_reason}")
+        except Exception:
+            logger.debug("Could not access token usage information for structured response")
+
+        if (
+            hasattr(response, "choices")
+            and response.choices
+            and hasattr(response.choices[0], "message")
+        ):
+            message = response.choices[0].message
+            logger.info(f"Message: {message}")
+            parsed = getattr(message, "parsed", None)
+            if parsed is not None:
+                try:
+                    json_content = json.dumps(parsed.model_dump(), ensure_ascii=False)
+                    logger.info(f"JSON content: {json_content}")
+                    if getattr(message, "content", None) in (None, "", []):
+                        message.content = json_content
+                except Exception as exc:
+                    logger.debug(f"Failed to serialize structured response to JSON string: {exc}")
+
+        return response
+
+    except Exception as e:
+        logger.error(f"Error calling structured model {model}: {e}", exc_info=True)
         raise
 
 
