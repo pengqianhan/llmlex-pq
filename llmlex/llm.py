@@ -296,7 +296,7 @@ def get_prompt(function_list=None, imports=None):
     logger.debug(f"Generated prompt with {len(function_list)} functions and {len(imports)} imports")
     return prompt
 
-def get_prompt_ha(state_data, input_data, imports=None, include_comments=False):
+def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
     """
     Generates an initial hybrid automaton JSON from lambda-style definitions.
     This is similar to how get_prompt works for symbolic regression, but for hybrid automata.
@@ -661,7 +661,7 @@ def call_model_ha(client, model, image, prompt, system_prompt=None):
         }
         ```
         """
-        system_prompt += JSON_comments
+        # system_prompt += JSON_comments
         logger.debug("Using default system prompt: \n" + system_prompt)
     # Track image size for debugging purposes
     image_size = len(image) if image else 0

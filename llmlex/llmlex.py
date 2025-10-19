@@ -269,8 +269,8 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
         
         If all attempts fail, it raises the last exception.
     """
-    logger.info(f"state_data: {state_data.shape}") #(1, 10001)
-    logger.info(f"input_data: {input_data.shape}") #(1, 10001)
+    # logger.info(f"state_data: {state_data.shape}") #(1, 10001)
+    # logger.info(f"input_data: {input_data.shape}") #(1, 10001)
     logger.debug(f"Starting single_call with model={model}, function_list size={len(function_list) if function_list else 0}")
     
     # Create a local stats tracker if none provided
