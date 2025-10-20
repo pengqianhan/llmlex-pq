@@ -790,7 +790,7 @@ def call_model_ha_json(client, model, image, prompt, system_prompt=None):
             and hasattr(response.choices[0], "message")
         ):
             message = response.choices[0].message
-            logger.info(f"Message: {message}")
+            # logger.info(f"Message: {message}")
             parsed = getattr(message, "parsed", None)
             if parsed is not None:
                 try:
