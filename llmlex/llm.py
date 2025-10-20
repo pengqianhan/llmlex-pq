@@ -412,7 +412,7 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
         mode_id_to = i+1 if i < len(mode_list) else 1
         edges.append({
             "direction": f"{mode_id_from} -> {mode_id_to}",
-            "condition": "*params",
+            "condition": f"lambda {', '.join(var_list + input_vars)}, *params: f({', '.join(var_list + input_vars)}, params) > 0",
             "reset": {var_list[j]: ["", "x[1]"] for j in range(num_state_vars)}
         })
     automaton["edge"] = edges
@@ -760,13 +760,6 @@ def call_model_ha_json(client, model, image, prompt, system_prompt=None):
         system_prompt = (
             "You are a hybrid automaton expert. Analyze the data in the supplied image and describe the system "
             "using the HybridAutomatonJSON schema. Respond ONLY with a JSON object that matches the schema:\n"
-            "- Top-level key: automation\n"
-            "- automation.var: comma separated variables like 'x1, x2'\n"
-            "- automation.input: comma separated inputs or empty string if none\n"
-            "- automation.mode: list with id and eq describing ODEs for each variable\n"
-            "- automation.edge: list with direction 'u -> v' and condition strings\n"
-            "- init_state: list of states including mode and initial variable values\n"
-            "- config: configuration values such as dt, total_time, dim\n"
         )
         logger.debug("Using default structured system prompt:\n%s", system_prompt)
 

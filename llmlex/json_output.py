@@ -32,20 +32,20 @@ class AutomationStructure(BaseModel):
 
 class ConfigSettings(BaseModel):
     """Configuration parameters for fitting the difference equation"""
-    dt: float = Field(default=0.001, description="Discrete time, default 0.001")
-    total_time: float = Field(default=10.0, description="Sampling total time, default 10")
-    dim: int = Field(default=3, description="Dimension of the difference equation, default 3")
+    dt: float = Field(default=0.001, description="Discrete time step (default 0.001)")
+    total_time: float = Field(default=10.0, description="Total sampling time (default 10.0)")
+    dim: int = Field(default=1, description="Dimension of difference equation (default 1)")
     # window_size: int = Field(default=10, description="Sliding window size, default 10")
     # clustering_method: str = Field(default="fit", description="Clustering method, default fit, options are fit and dis")
     # minus: bool = Field(default=False, description="Whether to minimize order, default false")
     # need_bias: bool = Field(default=True, description="Whether to include constant term, default true")
     # kernel: str = Field(default="linear", description="SVM kernel function, default linear")
-    # other_items: str = Field(default="", description="Other nonlinear or cross terms for the difference equation, default empty")
+    other_items: str = Field(default="", description="Additional nonlinear or cross terms (default empty string)")
 
 class HybridAutomatonJSON(BaseModel):
     """Complete hybrid automaton JSON structure"""
     automation: AutomationStructure = Field(description="Automaton structure")
-    init_state: List[Dict[str, Any]] = Field(description="Initial state list, each state contains mode and initial values of each variable")
+    # init_state: List[Dict[str, Any]] = Field(description="Initial state list, each state contains mode and initial values of each variable")
     config: ConfigSettings = Field(description="Configuration parameters for fitting the difference equation")
 
 # __all__ = ['HybridAutomatonJSON']
