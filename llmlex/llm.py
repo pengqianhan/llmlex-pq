@@ -344,14 +344,14 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
     input_vars = [f"u{i+1}" for i in range(num_input_vars)]
     # logger.info(f"var_list: {var_list}")
     # logger.info(f"input_vars: {input_vars}")
-
+    dim_diff_eq = 'k'
     automaton_comments = {
         "var": "// variables list, separated by ','",
         "input": "// input variables list, separated by ','",
         "mode": [
             {
                 "id": "// mode id",
-                "eq": "// ode of each variable in the mode, separated by ','\n// cannot contain variables that are not defined in var, x[k] represents the k-th derivative of x\n// the left side of the equal sign is the highest order derivative, the right side is the expression, does not support implicit functions\n// must provide ode for each variable"
+                "eq": f"// {dim_diff_eq}-th order difference equation in the mode, separated by ','\n// cannot contain variables that are not defined in var, x[k] represents the k-th derivative of x\n// the left side of the equal sign is the highest order derivative, the right side is the expression, does not support implicit functions\n// must provide ode for each variable"
             }
         ],
         "edge": [
@@ -375,7 +375,7 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
     }
     
     # For initial hybrid automaton, use only one mode, the equations use the lambda functions
-    dim_diff_eq = 'dim'
+    
     mode_eqs = {
         1: [f"{var_list[i]}[{dim_diff_eq}] = lambda {var_list[j]}, *params: " for i in range(num_state_vars) for j in range(num_state_vars)]
     }
