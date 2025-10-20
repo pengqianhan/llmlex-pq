@@ -360,12 +360,24 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
                 "condition": "// transition condition, cannot contain variables that are not defined in var",
                 "reset": "// reset mapping for each variable, each variable has a list of reset values"
             }
-        ]
+        ],
+        "config": {
+            "dt": "// discrete time step (default 0.001)",
+            "total_time": "// total sampling time (default 10.0)",
+            "dim": "// dimension of difference equation (default 1)",
+            # "window_size": "// sliding window size (default 10)",
+            # "clustering_method": "// clustering method, 'fit' or 'dis' (default 'fit')",
+            # "minus": "// whether to minimize order (default false)",
+            # "need_bias": "// whether to include constant term (default true)",
+            # "kernel": "// SVM kernel function (default 'linear')",
+            "other_items": "// additional nonlinear or cross terms (default empty string)"
+        }
     }
     
     # For initial hybrid automaton, use only one mode, the equations use the lambda functions
+    dim_diff_eq = 'dim'
     mode_eqs = {
-        1: [f"{var_list[i]}[1] = lambda {var_list[j]}, *params: " for i in range(num_state_vars) for j in range(num_state_vars)]
+        1: [f"{var_list[i]}[{dim_diff_eq}] = lambda {var_list[j]}, *params: " for i in range(num_state_vars) for j in range(num_state_vars)]
     }
     logger.info(f"mode_eqs: {mode_eqs}")
 
@@ -406,7 +418,22 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
     automaton["edge"] = edges
     logger.info(f"edges: {edges}")
     
-    result = {"automaton": automaton}
+    config = {
+        "dt": 0.001,
+        "total_time": 10.0,
+        "dim": dim_diff_eq,
+        # "window_size": 10,
+        # "clustering_method": "fit",
+        # "minus": False,
+        # "need_bias": True,
+        # "kernel": "linear",
+        "other_items": ""
+    }
+
+    result = {
+        "automaton": automaton,
+        "config": config
+    }
     # add comments to the result if enabled
     result_json = json.dumps(result, indent=2)
     if not include_comments:
@@ -422,6 +449,16 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
         '"direction": ': automaton_comments["edge"][0]["direction"],
         '"condition": ': automaton_comments["edge"][0]["condition"],
         '"reset": ': automaton_comments["edge"][0]["reset"],
+        '"config": {': "// configuration parameters",
+        '"dt": ': automaton_comments["config"]["dt"],
+        '"total_time": ': automaton_comments["config"]["total_time"],
+        '"dim": ': automaton_comments["config"]["dim"],
+        # '"window_size": ': automaton_comments["config"]["window_size"],
+        # '"clustering_method": ': automaton_comments["config"]["clustering_method"],
+        # '"minus": ': automaton_comments["config"]["minus"],
+        # '"need_bias": ': automaton_comments["config"]["need_bias"],
+        # '"kernel": ': automaton_comments["config"]["kernel"],
+        '"other_items": ': automaton_comments["config"]["other_items"],
     }
 
     if "input" in automaton:
