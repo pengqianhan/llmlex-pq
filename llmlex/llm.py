@@ -379,7 +379,7 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
     mode_eqs = {
         1: [f"{var_list[i]}[{dim_diff_eq}] = lambda {var_list[j]}, *params: " for i in range(num_state_vars) for j in range(num_state_vars)]
     }
-    logger.info(f"mode_eqs: {mode_eqs}")
+    # logger.info(f"mode_eqs: {mode_eqs}")
 
     
     # Build the mode list
@@ -416,7 +416,7 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
             "reset": {var_list[j]: ["", "x[1]"] for j in range(num_state_vars)}
         })
     automaton["edge"] = edges
-    logger.info(f"edges: {edges}")
+    # logger.info(f"edges: {edges}")
     
     config = {
         "dt": 0.001,
