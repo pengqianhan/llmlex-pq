@@ -12,7 +12,9 @@ client = openai.OpenAI(
     base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
     api_key=os.getenv("GEMINI_API_KEY") if os.getenv("GEMINI_API_KEY") else "<<<<<<your_api_key>>>>>>>", 
 )
-model_name = "models/gemini-flash-lite-latest"
+# model_name = "models/gemini-flash-lite-latest"
+model_name = "models/gemini-flash-latest"
+# model_name = "models/gemini-2.5-pro"
 # Generate data
 # x = np.linspace(-1, 1, 50)
 # y = np.sin(np.pi * x) + 0.1 * np.random.randn(50)
