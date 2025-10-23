@@ -43,8 +43,49 @@ class ODESystem:
             expr = input_expr.get(var)
             if expr is None:
                 res.append(lambda t: 0)
-            else:
+            elif isinstance(expr, str):
+                # String expression - use eval as before
                 res.append(eval("lambda t: " + expr))
+            elif isinstance(expr, (np.ndarray, list)):
+                # Numpy array or list - create indexing function
+                input_array = np.asarray(expr)
+                if input_array.ndim == 1:
+                    # 1D array: direct indexing
+                    # Note: array[i] corresponds to time (i+1)*dt in the original data
+                    # because it was collected AFTER sys.next() advanced time
+                    def make_input_func(arr, dt):
+                        def input_func(t):
+                            if dt is None or dt <= 0:
+                                return arr[0]
+                            # Array index i corresponds to time (i+1)*dt
+                            # So for time t, we need index i where (i+1)*dt ≈ t
+                            # Thus i ≈ t/dt - 1
+                            idx = int(round(t / dt - 1))
+                            idx = max(0, min(idx, len(arr) - 1))  # Clamp to array bounds
+                            return arr[idx]
+                        return input_func
+                    res.append(make_input_func(input_array, self.dt))
+                elif input_array.ndim == 2:
+                    # 2D array: assume shape (1, num_steps) or (num_steps, 1)
+                    if input_array.shape[0] == 1:
+                        arr_1d = input_array[0, :]
+                    else:
+                        arr_1d = input_array[:, 0]
+                    # Note: array[i] corresponds to time (i+1)*dt in the original data
+                    def make_input_func(arr, dt):
+                        def input_func(t):
+                            if dt is None or dt <= 0:
+                                return arr[0]
+                            # Array index i corresponds to time (i+1)*dt
+                            idx = int(round(t / dt - 1))
+                            idx = max(0, min(idx, len(arr) - 1))  # Clamp to array bounds
+                            return arr[idx]
+                        return input_func
+                    res.append(make_input_func(arr_1d, self.dt))
+                else:
+                    raise ValueError(f"Input array for '{var}' must be 1D or 2D, got shape {input_array.shape}")
+            else:
+                raise TypeError(f"Input for '{var}' must be string expression, numpy array, or list, got {type(expr)}")
         return res
 
     def transExpr(self, expr):
@@ -77,6 +118,7 @@ class ODESystem:
         self.input_fun_list = self.analyticalInput()
         self.now_time = 0.
         self.reset_val = {}
+        self.dt = None  # Store time step for array-based inputs
 
     def fit_state_size(self):
         state = np.zeros((self.var_num, self.max_order)).astype(np.float64)
@@ -107,7 +149,9 @@ class ODESystem:
         self.now_time += dT
         return self.state[:, 0]
 
-    def reset(self, init_state):
+    def reset(self, init_state, dt=None):
+        if dt is not None:
+            self.dt = dt
         res = []
         for var in self.var_list:
             res.append(init_state.get(var, []))

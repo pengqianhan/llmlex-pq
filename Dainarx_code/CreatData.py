@@ -134,10 +134,10 @@ def creat_data(json_path: str, data_path: str, dT: float, times: float):
             state_data = np.transpose(np.array(state_data))
             input_data = np.transpose(np.array(input_data))
             mode_data = np.array(mode_data)
-            print("state_data.shape: ", state_data.shape) #state_data.shape:  (1, 1001)
-            print("mode_data.shape: ", mode_data.shape)
-            print("input_data.shape: ", input_data.shape)
-            print("change_points.shape: ", len(change_points))
+            # print("state_data.shape: ", state_data.shape) #state_data.shape:  (1, 1001)
+            # print("mode_data.shape: ", mode_data.shape)
+            # print("input_data.shape: ", input_data.shape)
+            # print("change_points.shape: ", len(change_points))
             '''
             ball
             state_data.shape:  (2, 10001)

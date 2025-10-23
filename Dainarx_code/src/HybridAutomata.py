@@ -109,9 +109,9 @@ class HybridAutomata:
                 break
         return res, mode_state, switched
 
-    def reset(self, init_state, *args):
+    def reset(self, init_state, dt=None, *args):
         self.mode_state = init_state.get('mode', self.mode_state)
-        self.mode_list[self.mode_state].reset(init_state, *args)
+        self.mode_list[self.mode_state].reset(init_state, dt, *args)
 
 
 if __name__ == "__main__":
