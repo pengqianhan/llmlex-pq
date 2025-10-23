@@ -16,7 +16,7 @@ load_dotenv()
 class ModeDefinition(BaseModel):
     """Define a single mode"""
     id: int = Field(description="Mode ID, integer")
-    eq: str = Field(description="ODE of each variable in the mode, separated by commas. Example: 'x1[1] = 1, x2[2] = -3 * x2[1] - 25 * x2[0] + 25'. The left side of the equal sign is the highest order derivative, the right side is the expression")
+    eq: str = Field(description="ODE of each variable in the mode, separated by commas. x[k] represents the k-th derivative of x. Example: 'x1[1] = 1, x2[1] = -3 * x1[0] - 25 * x2[0] + 25'. The left side of the equal sign is the highest order derivative, the right side is the expression")
 
 class EdgeTransition(BaseModel):
     """Define transition edges between modes (no reset field)"""
@@ -31,10 +31,10 @@ class AutomationStructure(BaseModel):
     edge: List[EdgeTransition] = Field(description="List of transition edges between modes")
 
 class ConfigSettings(BaseModel):
-    """Configuration parameters for fitting the difference equation"""
+    """Configuration parameters for fitting the differential equation"""
     dt: float = Field(default=0.001, description="Discrete time step (default 0.001)")
     total_time: float = Field(default=10.0, description="Total sampling time (default 10.0)")
-    dim: int = Field(default=1, description="Dimension of difference equation (default 1)")
+    dim: int = Field(default=1, description="Dimension of differential equation (default 1)")
     # window_size: int = Field(default=10, description="Sliding window size, default 10")
     # clustering_method: str = Field(default="fit", description="Clustering method, default fit, options are fit and dis")
     # minus: bool = Field(default=False, description="Whether to minimize order, default false")
@@ -46,6 +46,6 @@ class HybridAutomatonJSON(BaseModel):
     """Complete hybrid automaton JSON structure"""
     automation: AutomationStructure = Field(description="Automaton structure")
     # init_state: List[Dict[str, Any]] = Field(description="Initial state list, each state contains mode and initial values of each variable")
-    config: ConfigSettings = Field(description="Configuration parameters for fitting the difference equation")
+    config: ConfigSettings = Field(description="Configuration parameters for fitting the differential equation")
 
 # __all__ = ['HybridAutomatonJSON']

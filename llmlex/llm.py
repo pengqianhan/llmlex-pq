@@ -351,7 +351,7 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
         "mode": [
             {
                 "id": "// mode id",
-                "eq": f"// {dim_diff_eq}-th order difference equation in the mode, separated by ','\n// cannot contain variables that are not defined in var, x[k] represents the k-th derivative of x\n// the left side of the equal sign is the highest order derivative, the right side is the expression, does not support implicit functions\n// must provide ode for each variable"
+                "eq": f"// {dim_diff_eq}-th order differential equation in the mode, separated by ','\n// cannot contain variables that are not defined in var, x[k] represents the k-th derivative of x\n// the left side of the equal sign is the highest order derivative, the right side is the expression, does not support implicit functions\n// must provide ode for each variable"
             }
         ],
         "edge": [
@@ -364,7 +364,7 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
         "config": {
             "dt": "// discrete time step (default 0.001)",
             "total_time": "// total sampling time (default 10.0)",
-            "dim": "// dimension of difference equation (default 1)",
+            "dim": "// dimension of differential equation (default 1)",
             # "window_size": "// sliding window size (default 10)",
             # "clustering_method": "// clustering method, 'fit' or 'dis' (default 'fit')",
             # "minus": "// whether to minimize order (default false)",
