@@ -7,7 +7,7 @@ import threading
 from functools import wraps
 import json
 
-from llmlex.json_output import HybridAutomatonJSON
+from llmlex.json_output import HybridAutomatonJSON, HybridAutomatonJSONSimple
 
 # Get module logger
 logger = logging.getLogger("LLMLEx.llm")
@@ -690,7 +690,7 @@ def call_model_ha_json(client, model, image, prompt, system_prompt=None):
             response = client.beta.chat.completions.parse(
                 model=model,
                 messages=messages,
-                response_format=HybridAutomatonJSON,
+                response_format=HybridAutomatonJSONSimple,
             )
         else:
             logger.debug("Structured API not available; falling back to standard chat completion")

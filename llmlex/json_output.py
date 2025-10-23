@@ -48,6 +48,37 @@ class HybridAutomatonJSON(BaseModel):
     # init_state: List[Dict[str, Any]] = Field(description="Initial state list, each state contains mode and initial values of each variable")
     config: ConfigSettings = Field(description="Configuration parameters for fitting the differential equation")
 
-# __all__ = ['HybridAutomatonJSON']
+# ============ 无 description 版本（用于不需要提示词的场景）============
+
+class ModeDefinitionSimple(BaseModel):
+    """Define a single mode (no descriptions)"""
+    id: int
+    eq: str
+
+class EdgeTransitionSimple(BaseModel):
+    """Define transition edges between modes (no descriptions)"""
+    direction: str
+    condition: str
+
+class AutomationStructureSimple(BaseModel):
+    """Core structure of the hybrid automaton (no descriptions)"""
+    var: str
+    input: str
+    mode: List[ModeDefinitionSimple]
+    edge: List[EdgeTransitionSimple]
+
+class ConfigSettingsSimple(BaseModel):
+    """Configuration parameters (no descriptions)"""
+    dt: float = 0.001
+    total_time: float = 10.0
+    dim: int
+    other_items: str 
+
+class HybridAutomatonJSONSimple(BaseModel):
+    """Complete hybrid automaton JSON structure (no descriptions)"""
+    automation: AutomationStructureSimple
+    config: ConfigSettingsSimple
+
+# __all__ = ['HybridAutomatonJSON', 'HybridAutomatonJSONSimple']
 
 ##
