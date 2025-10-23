@@ -30,10 +30,11 @@ cnt = 0
 system_name = "Duffing Oscillator"
 base64_img_ha = llmlex.images.generate_base64_image_ha(state_data, input_data, dt, system_name,cnt,None)
 
+system_prompt = open('prompts/system_prompt.md', 'r').read()
 
 # Run symbolic regression
 # result = llmlex.single_call(client, base64_img, x, y, model=model_name)
-result_ha = llmlex.single_call_ha(client, base64_img_ha, state_data, input_data, model=model_name)
+result_ha = llmlex.single_call_ha(client, base64_img_ha, state_data, input_data, model=model_name, system_prompt=system_prompt)
 
 # View results
 print(f"Best function: {result_ha['ansatz']}")
