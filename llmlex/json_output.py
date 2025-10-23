@@ -49,3 +49,5 @@ class HybridAutomatonJSON(BaseModel):
     config: ConfigSettings = Field(description="Configuration parameters for fitting the differential equation")
 
 # __all__ = ['HybridAutomatonJSON']
+
+##
