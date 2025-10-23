@@ -1,7 +1,6 @@
 import numpy as np
 import os
 from math import *
-import src.DE as DE
 import matplotlib.pyplot as plt
 from typing import Optional
 from src.HybridAutomata import HybridAutomata
