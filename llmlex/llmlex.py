@@ -771,7 +771,7 @@ def run_genetic(client, base64_image, x, y, population_size, num_of_generations,
                 
                 logger.error("Async: Failed to generate individual after 5 attempts with exponential backoff")
                 return None
-        for i in range(population_size):
+        for i in range(population_size):# default population size is 5
             tasks.append(create_individual())
         
         # Wait for all tasks to complete
