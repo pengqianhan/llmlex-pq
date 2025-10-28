@@ -22,17 +22,23 @@ fig, ax = plt.subplots()
 ax.scatter(x, y)
 base64_img = llmlex.images.generate_base64_image(fig, ax, x, y)
 
-# Run symbolic regression
-result = llmlex.single_call(client, base64_img, x, y, model=model_name)
+## basic usage
+# # Run symbolic regression
+# result = llmlex.single_call(client, base64_img, x, y, model=model_name)
 
-# View results
-print(f"Best function: {result['ansatz']}")
-print(f"Parameters: {result['params']}")
-print(f"Score: {result['score']}")
+# # View results
+# print(f"Best function: {result['ansatz']}")
+# print(f"Parameters: {result['params']}")
+# print(f"Score: {result['score']}")
 
 # For more complex problems, use genetic algorithm approach
-# populations = llmlex.run_genetic(
-#     client, base64_img, x, y, 
-#     population_size=5, num_of_generations=3,
-#     model=model_name
-# )
+populations = llmlex.run_genetic(
+    client, base64_img, x, y, 
+    population_size=5, num_of_generations=3,
+    model=model_name
+)
+
+# View results
+print(f"Best function: {populations[0][0]['ansatz']}")
+print(f"Parameters: {populations[0][0]['params']}")
+print(f"Score: {populations[0][0]['score']}")

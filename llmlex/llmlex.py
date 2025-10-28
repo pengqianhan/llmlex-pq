@@ -749,7 +749,7 @@ def run_genetic(client, base64_image, x, y, population_size, num_of_generations,
                 for attempt in range(max_attempts):
                     try:
                         # Calculate exponential backoff delay
-                        backoff_time = 0.1 * (2 ** attempt)  # 0.5s, 1s, 2s, 4s, 8s
+                        backoff_time = 0.1 * (2 ** attempt)  # 0.1s, 0.2s, 0.4s, 0.8s, 1.6s
                         
                         logger.debug(f"Async: Generating individual, attempt {attempt+1}/{max_attempts}")
                         result = await async_single_call(
