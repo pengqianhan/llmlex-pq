@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>run_genetic 函数详解 - 遗传算法符号回归</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', 'Microsoft YaHei', Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 20px;
+        }
+        
+        h2 {
+            color: #764ba2;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-left: 5px solid #764ba2;
+            padding-left: 15px;
+        }
+        
+        h3 {
+            color: #667eea;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.4em;
+        }
+        
+        .step {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            margin: 25px 0;
+            border-radius: 12px;
+            border-left: 5px solid #667eea;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        
+        .step-number {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 40px;
+            font-weight: bold;
+            margin-right: 15px;
+            font-size: 1.2em;
+        }
+        
+        .code-block {
+            background: #282c34;
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 15px 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95em;
+            line-height: 1.6;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .code-block .keyword {
+            color: #c678dd;
+        }
+        
+        .code-block .function {
+            color: #61afef;
+        }
+        
+        .code-block .string {
+            color: #98c379;
+        }
+        
+        .code-block .comment {
+            color: #5c6370;
+            font-style: italic;
+        }
+        
+        .code-block .number {
+            color: #d19a66;
+        }
+        
+        .diagram {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        
+        .svg-container {
+            display: inline-block;
+            max-width: 100%;
+        }
+        
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #2196F3;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .warning-box {
+            background: #fff4e5;
+            border-left: 4px solid #ff9800;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .success-box {
+            background: #e8f5e9;
+            border-left: 4px solid #4caf50;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        
+        .parameter-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .parameter-table th {
+            background: #667eea;
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: bold;
+        }
+        
+        .parameter-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        .parameter-table tr:hover {
+            background: #f5f5f5;
+        }
+        
+        .flow-chart {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 30px 0;
+        }
+        
+        .flow-box {
+            background: white;
+            border: 3px solid #667eea;
+            padding: 20px 30px;
+            margin: 10px;
+            border-radius: 12px;
+            min-width: 250px;
+            text-align: center;
+            font-weight: bold;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .flow-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px rgba(0,0,0,0.2);
+        }
+        
+        .arrow {
+            font-size: 2em;
+            color: #667eea;
+            margin: 5px 0;
+        }
+        
+        ul, ol {
+            margin-left: 30px;
+            margin-top: 15px;
+        }
+        
+        li {
+            margin: 10px 0;
+        }
+        
+        .highlight {
+            background: #ffeb3b;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-weight: bold;
+        }
+        
+        .formula {
+            background: #f5f5f5;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            font-size: 1.1em;
+            border: 2px dashed #667eea;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧬 run_genetic 函数详解</h1>
+        <p style="text-align: center; font-size: 1.2em; color: #666; margin-bottom: 30px;">
+            基于大语言模型的遗传算法符号回归详细教程
+        </p>
+
+        <!-- 概述 -->
+        <div class="info-box">
+            <h3>📖 函数概述</h3>
+            <p><strong>run_genetic</strong> 是一个创新的遗传算法实现，它使用大语言模型（LLM）来生成和优化数学公式，以拟合给定的数据。
+            与传统遗传算法不同，这个方法利用 GPT 等模型的数学理解能力来"进化"更好的函数表达式。</p>
+        </div>
+
+        <!-- 参数说明 -->
+        <h2>📋 参数说明</h2>
+        <table class="parameter-table">
+            <tr>
+                <th>参数名</th>
+                <th>类型</th>
+                <th>说明</th>
+            </tr>
+            <tr>
+                <td><code>client</code></td>
+                <td>object</td>
+                <td>OpenAI 客户端对象，用于调用 LLM API</td>
+            </tr>
+            <tr>
+                <td><code>base64_image</code></td>
+                <td>str</td>
+                <td>数据可视化图像的 base64 编码，让 LLM 看到数据分布</td>
+            </tr>
+            <tr>
+                <td><code>x</code></td>
+                <td>array-like</td>
+                <td>输入数据（自变量）</td>
+            </tr>
+            <tr>
+                <td><code>y</code></td>
+                <td>array-like</td>
+                <td>目标数据（因变量）</td>
+            </tr>
+            <tr>
+                <td><code>population_size</code></td>
+                <td>int</td>
+                <td>种群大小，即每一代有多少个候选公式</td>
+            </tr>
+            <tr>
+                <td><code>num_of_generations</code></td>
+                <td>int</td>
+                <td>进化代数，算法会迭代多少次</td>
+            </tr>
+            <tr>
+                <td><code>temperature</code></td>
+                <td>float</td>
+                <td>选择温度参数，控制选择的随机性（默认 1.0）</td>
+            </tr>
+            <tr>
+                <td><code>model</code></td>
+                <td>str</td>
+                <td>使用的 LLM 模型名称</td>
+            </tr>
+            <tr>
+                <td><code>exit_condition</code></td>
+                <td>float</td>
+                <td>提前终止条件（归一化卡方值阈值，默认 1e-5）</td>
+            </tr>
+            <tr>
+                <td><code>elite</code></td>
+                <td>bool</td>
+                <td>是否使用精英主义（保留最优个体）</td>
+            </tr>
+            <tr>
+                <td><code>plot_parents</code></td>
+                <td>bool</td>
+                <td>是否在图像中显示父代公式的曲线</td>
+            </tr>
+        </table>
+
+        <!-- 算法流程图 -->
+        <h2>🔄 算法整体流程</h2>
+        <div class="diagram">
+            <div class="flow-chart">
+                <div class="flow-box">1️⃣ 初始化<br>检查常数函数基线</div>
+                <div class="arrow">↓</div>
+                <div class="flow-box">2️⃣ 生成初始种群<br>并行调用 LLM 生成候选公式</div>
+                <div class="arrow">↓</div>
+                <div class="flow-box">3️⃣ 评估适应度<br>计算每个公式的拟合分数</div>
+                <div class="arrow">↓</div>
+                <div class="flow-box">4️⃣ 选择父代<br>基于适应度加权随机选择</div>
+                <div class="arrow">↓</div>
+                <div class="flow-box">5️⃣ 生成后代<br>LLM 基于父代生成新公式</div>
+                <div class="arrow">↓</div>
+                <div class="flow-box">6️⃣ 检查终止条件<br>达到目标或最大代数</div>
+                <div class="arrow">↓</div>
+                <div class="flow-box">✅ 返回最优解</div>
+            </div>
+        </div>
+
+        <!-- 详细步骤 -->
+        <h2>🔍 详细步骤解析</h2>
+
+        <!-- 步骤 1 -->
+        <div class="step">
+            <h3><span class="step-number">1</span>初始化与基线检查</h3>
+            <p>算法首先检查一个<span class="highlight">常数函数</span>是否足够好。这是一个重要的优化，避免不必要的计算。</p>
+            
+            <div class="code-block">
+<span class="comment"># 清除速率限制锁</span>
+clear_rate_limit_lock()
+
+<span class="comment"># 初始化统计追踪器</span>
+api_stats = APICallStats()
+
+<span class="comment"># 检查常数函数作为基线</span>
+curve = <span class="keyword">lambda</span> x, *params: params[<span class="number">0</span>] * np.ones(len(x))
+params, _ = curve_fit(curve, x, y, p0=[<span class="number">1.0</span>])
+n_chi_squared = get_n_chi_squared(x, y, curve, params)
+
+<span class="keyword">if</span> n_chi_squared <= exit_condition:
+    <span class="comment"># 常数函数已经足够好，直接返回</span>
+    <span class="keyword">return</span> populations
+            </div>
+
+            <div class="info-box">
+                <strong>💡 为什么要检查常数函数？</strong><br>
+                如果数据本身就是一个常数（y ≈ c），那么没有必要运行复杂的遗传算法。这个检查可以节省大量的 API 调用费用。
+            </div>
+
+            <div class="formula">
+                常数函数: f(x) = c<br>
+                归一化卡方: χ²_n = Σ(y_i - f(x_i))² / (N × var(y))
+            </div>
+        </div>
+
+        <!-- 步骤 2 -->
+        <div class="step">
+            <h3><span class="step-number">2</span>生成初始种群（异步并行）</h3>
+            <p>这是算法的核心创新之一：使用<span class="highlight">异步并行</span>调用 LLM 来生成初始种群。</p>
+            
+            <div class="code-block">
+<span class="keyword">async def</span> <span class="function">generate_population</span>():
+    tasks = []
+    semaphore = asyncio.Semaphore(<span class="number">10</span>)  <span class="comment"># 限制并发请求数为 10</span>
+    
+    <span class="keyword">async def</span> <span class="function">create_individual</span>():
+        <span class="keyword">async with</span> semaphore:
+            max_attempts = <span class="number">5</span>
+            <span class="keyword">for</span> attempt <span class="keyword">in</span> range(max_attempts):
+                <span class="keyword">try</span>:
+                    <span class="comment"># 指数退避策略</span>
+                    backoff_time = <span class="number">0.1</span> * (<span class="number">2</span> ** attempt)
+                    
+                    <span class="comment"># 调用 LLM 生成公式</span>
+                    result = <span class="keyword">await</span> async_single_call(
+                        client, base64_image, x, y, 
+                        model=model, system_prompt=system_prompt,
+                        stats=api_stats, imports=imports
+                    )
+                    <span class="keyword">if</span> result <span class="keyword">is not</span> None:
+                        <span class="keyword">return</span> result
+                    
+                    <span class="keyword">await</span> asyncio.sleep(backoff_time)
+                <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+                    <span class="keyword">await</span> asyncio.sleep(backoff_time)
+            
+            <span class="keyword">return</span> None
+    
+    <span class="comment"># 创建所有任务</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> range(population_size):
+        tasks.append(create_individual())
+    
+    <span class="comment"># 等待所有任务完成</span>
+    results = <span class="keyword">await</span> asyncio.gather(*tasks)
+    <span class="keyword">return</span> [r <span class="keyword">for</span> r <span class="keyword">in</span> results <span class="keyword">if</span> r <span class="keyword">is not</span> None]
+
+<span class="comment"># 安全地执行异步代码</span>
+population = execute_async_in_loop(generate_population())
+            </div>
+
+            <div class="diagram">
+                <h4>并行生成示意图</h4>
+                <svg width="600" height="300" style="max-width: 100%; height: auto;">
+                    <!-- LLM API -->
+                    <rect x="250" y="20" width="100" height="60" fill="#667eea" rx="10"/>
+                    <text x="300" y="55" text-anchor="middle" fill="white" font-weight="bold">LLM API</text>
+                    
+                    <!-- 并行请求 -->
+                    <g>
+                        <line x1="150" y1="120" x2="280" y2="80" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <circle cx="150" cy="120" r="25" fill="#98c379"/>
+                        <text x="150" y="125" text-anchor="middle" fill="white" font-weight="bold">1</text>
+                    </g>
+                    
+                    <g>
+                        <line x1="230" y1="140" x2="280" y2="80" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <circle cx="230" cy="140" r="25" fill="#98c379"/>
+                        <text x="230" y="145" text-anchor="middle" fill="white" font-weight="bold">2</text>
+                    </g>
+                    
+                    <g>
+                        <line x1="300" y1="150" x2="300" y2="80" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <circle cx="300" cy="150" r="25" fill="#98c379"/>
+                        <text x="300" y="155" text-anchor="middle" fill="white" font-weight="bold">3</text>
+                    </g>
+                    
+                    <g>
+                        <line x1="370" y1="140" x2="320" y2="80" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <circle cx="370" cy="140" r="25" fill="#98c379"/>
+                        <text x="370" y="145" text-anchor="middle" fill="white" font-weight="bold">...</text>
+                    </g>
+                    
+                    <g>
+                        <line x1="450" y1="120" x2="320" y2="80" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowhead)"/>
+                        <circle cx="450" cy="120" r="25" fill="#98c379"/>
+                        <text x="450" y="125" text-anchor="middle" fill="white" font-weight="bold">N</text>
+                    </g>
+                    
+                    <!-- 结果 -->
+                    <text x="300" y="220" text-anchor="middle" font-size="16" font-weight="bold">⬇️ 等待所有结果 ⬇️</text>
+                    
+                    <rect x="200" y="240" width="200" height="40" fill="#4caf50" rx="8"/>
+                    <text x="300" y="265" text-anchor="middle" fill="white" font-weight="bold">初始种群（N个公式）</text>
+                    
+                    <!-- Arrow marker definition -->
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+                            <polygon points="0 0, 10 5, 0 10" fill="#764ba2"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+
+            <div class="warning-box">
+                <strong>⚠️ 重要特性：</strong>
+                <ul>
+                    <li><strong>信号量（Semaphore）</strong>：限制同时进行的 API 调用数量为 10，避免超出速率限制</li>
+                    <li><strong>指数退避（Exponential Backoff）</strong>：失败后等待时间呈指数增长（0.1s, 0.2s, 0.4s, 0.8s, 1.6s）</li>
+                    <li><strong>最多重试 5 次</strong>：每个个体最多尝试生成 5 次</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 步骤 3 -->
+        <div class="step">
+            <h3><span class="step-number">3</span>评估适应度与排序</h3>
+            <p>生成的每个公式都需要被评估。适应度分数越高，公式越好。</p>
+            
+            <div class="code-block">
+<span class="comment"># 处理非有限分数（NaN 和 Inf）</span>
+non_finite_scores = [p <span class="keyword">for</span> p <span class="keyword">in</span> population <span class="keyword">if not</span> np.isfinite(p[<span class="string">'score'</span>])]
+<span class="keyword">if</span> non_finite_scores:
+    finite_scores = [ind[<span class="string">'score'</span>] <span class="keyword">for</span> ind <span class="keyword">in</span> population <span class="keyword">if</span> np.isfinite(ind[<span class="string">'score'</span>])]
+    <span class="keyword">if</span> finite_scores:
+        min_score = min(finite_scores)
+        bad_score = <span class="number">2</span> * min_score <span class="keyword">if</span> min_score < <span class="number">0</span> <span class="keyword">else</span> min_score - abs(min_score)
+    <span class="keyword">else</span>:
+        bad_score = -<span class="number">1e8</span>
+    
+    <span class="comment"># 将所有非有限分数设置为相同的坏分数</span>
+    <span class="keyword">for</span> p <span class="keyword">in</span> non_finite_scores:
+        p[<span class="string">'score'</span>] = bad_score
+
+<span class="comment"># 按分数排序（分数越高越好）</span>
+population.sort(key=<span class="keyword">lambda</span> x: x[<span class="string">'score'</span>])
+populations.append(population)
+best_pop = population[-<span class="number">1</span>]  <span class="comment"># 最后一个是最好的</span>
+
+<span class="comment"># 检查是否满足退出条件</span>
+<span class="keyword">if</span> best_pop[<span class="string">'score'</span>] > -exit_condition:
+    <span class="keyword">return</span> populations  <span class="comment"># 提前终止</span>
+            </div>
+
+            <div class="info-box">
+                <strong>💡 适应度分数说明：</strong><br>
+                分数 = -χ²_n（归一化卡方的负值）<br>
+                • 分数越接近 0 越好（完美拟合时为 0）<br>
+                • 负值越小，拟合越差<br>
+                • NaN 或 Inf 表示拟合失败，会被赋予一个很低的分数
+            </div>
+
+            <div class="diagram">
+                <h4>种群排序示例</h4>
+                <svg width="600" height="250" style="max-width: 100%; height: auto;">
+                    <!-- Before sorting -->
+                    <text x="150" y="30" text-anchor="middle" font-weight="bold" font-size="18">排序前</text>
+                    
+                    <rect x="50" y="50" width="200" height="40" fill="#ffcdd2" stroke="#c62828" stroke-width="2" rx="5"/>
+                    <text x="150" y="75" text-anchor="middle">公式 A: score = -100</text>
+                    
+                    <rect x="50" y="100" width="200" height="40" fill="#fff9c4" stroke="#f57f17" stroke-width="2" rx="5"/>
+                    <text x="150" y="125" text-anchor="middle">公式 B: score = -10</text>
+                    
+                    <rect x="50" y="150" width="200" height="40" fill="#c8e6c9" stroke="#2e7d32" stroke-width="2" rx="5"/>
+                    <text x="150" y="175" text-anchor="middle">公式 C: score = -0.5</text>
+                    
+                    <!-- Arrow -->
+                    <text x="300" y="125" text-anchor="middle" font-size="30">➡️</text>
+                    
+                    <!-- After sorting -->
+                    <text x="450" y="30" text-anchor="middle" font-weight="bold" font-size="18">排序后</text>
+                    
+                    <rect x="350" y="50" width="200" height="40" fill="#ffcdd2" stroke="#c62828" stroke-width="2" rx="5"/>
+                    <text x="450" y="75" text-anchor="middle">公式 A: score = -100</text>
+                    
+                    <rect x="350" y="100" width="200" height="40" fill="#fff9c4" stroke="#f57f17" stroke-width="2" rx="5"/>
+                    <text x="450" y="125" text-anchor="middle">公式 B: score = -10</text>
+                    
+                    <rect x="350" y="150" width="200" height="40" fill="#c8e6c9" stroke="#2e7d32" stroke-width="2" rx="5"/>
+                    <text x="450" y="175" text-anchor="middle">公式 C: score = -0.5 ⭐</text>
+                    
+                    <text x="450" y="210" text-anchor="middle" font-size="14" fill="#2e7d32" font-weight="bold">↑ 最优个体</text>
+                </svg>
+            </div>
+        </div>
+
+        <!-- 步骤 4 -->
+        <div class="step">
+            <h3><span class="step-number">4</span>选择父代（基于温度的选择）</h3>
+            <p>使用<span class="highlight">玻尔兹曼选择</span>方法，根据适应度计算每个个体被选中的概率。</p>
+            
+            <div class="code-block">
+<span class="comment"># 计算选择概率</span>
+scores = np.array([ind[<span class="string">'score'</span>] <span class="keyword">for</span> ind <span class="keyword">in</span> population])
+finite_scores = scores[np.isfinite(scores)]
+
+<span class="comment"># 归一化分数到 [0, 1]</span>
+normalized_scores = (scores - np.min(finite_scores)) / (np.max(finite_scores) - np.min(finite_scores) + <span class="number">1e-6</span>)
+
+<span class="comment"># 应用温度参数的 softmax</span>
+exp_scores = np.exp((normalized_scores - np.max(normalized_scores)) / temperature)
+probs = exp_scores / np.sum(exp_scores)
+
+<span class="comment"># 为每个新个体选择两个父代</span>
+selected_population = [
+    np.random.choice(populations[-<span class="number">1</span>], size=<span class="number">2</span>, p=probs, replace=<span class="keyword">True</span>) 
+    <span class="keyword">for</span> _ <span class="keyword">in</span> range(population_size)
+]
+
+<span class="comment"># 提取父代的公式和参数</span>
+func_lists = [
+    [(pops[<span class="number">0</span>][<span class="string">'ansatz'</span>], pops[<span class="number">0</span>][<span class="string">'params'</span>]), 
+     (pops[<span class="number">1</span>][<span class="string">'ansatz'</span>], pops[<span class="number">1</span>][<span class="string">'params'</span>])] 
+    <span class="keyword">for</span> pops <span class="keyword">in</span> selected_population
+]
+            </div>
+
+            <div class="formula">
+                选择概率公式:<br><br>
+                P(i) = exp(score_i / T) / Σ exp(score_j / T)<br><br>
+                T = temperature（温度参数）
+            </div>
+
+            <div class="info-box">
+                <strong>💡 温度参数的作用：</strong>
+                <ul>
+                    <li><strong>T → 0</strong>：几乎总是选择最好的个体（贪婪选择，可能陷入局部最优）</li>
+                    <li><strong>T = 1</strong>：平衡的选择（推荐值）</li>
+                    <li><strong>T → ∞</strong>：接近均匀随机选择（探索性强，但效率低）</li>
+                </ul>
+            </div>
+
+            <div class="diagram">
+                <h4>选择概率分布示例（温度对比）</h4>
+                <svg width="700" height="300" style="max-width: 100%; height: auto;">
+                    <!-- Temperature = 0.1 (greedy) -->
+                    <text x="120" y="30" text-anchor="middle" font-weight="bold">T = 0.1 (贪婪)</text>
+                    <rect x="20" y="50" width="200" height="15" fill="#e0e0e0"/>
+                    <rect x="20" y="50" width="180" height="15" fill="#4caf50"/>
+                    <text x="230" y="62" font-size="12">个体 1: 90%</text>
+                    
+                    <rect x="20" y="75" width="200" height="15" fill="#e0e0e0"/>
+                    <rect x="20" y="75" width="18" height="15" fill="#ff9800"/>
+                    <text x="230" y="87" font-size="12">个体 2: 9%</text>
+                    
+                    <rect x="20" y="100" width="200" height="15" fill="#e0e0e0"/>
+                    <rect x="20" y="100" width="2" height="15" fill="#f44336"/>
+                    <text x="230" y="112" font-size="12">个体 3: 1%</text>
+                    
+                    <!-- Temperature = 1.0 (balanced) -->
+                    <text x="370" y="30" text-anchor="middle" font-weight="bold">T = 1.0 (平衡)</text>
+                    <rect x="270" y="50" width="200" height="15" fill="#e0e0e0"/>
+                    <rect x="270" y="50" width="110" height="15" fill="#4caf50"/>
+                    <text x="480" y="62" font-size="12">个体 1: 55%</text>
+                    
+                    <rect x="270" y="75" width="200" height="15" fill="#e0e0e0"/>
+                    <rect x="270" y="75" width="60" height="15" fill="#ff9800"/>
+                    <text x="480" y="87" font-size="12">个体 2: 30%</text>
+                    
+                    <rect x="270" y="100" width="200" height="15" fill="#e0e0e0"/>
+                    <rect x="270" y="100" width="30" height="15" fill="#f44336"/>
+                    <text x="480" y="112" font-size="12">个体 3: 15%</text>
+                    
+                    <!-- Temperature = 10.0 (exploratory) -->
+                    <text x="120" y="170" text-anchor="middle" font-weight="bold">T = 10.0 (探索)</text>
+                    <rect x="20" y="190" width="200" height="15" fill="#e0e0e0"/>
+                    <rect x="20" y="190" width="74" height="15" fill="#4caf50"/>
+                    <text x="230" y="202" font-size="12">个体 1: 37%</text>
+                    
+                    <rect x="20" y="215" width="200" height="15" fill="#e0e0e0"/>
+                    <rect x="20" y="215" width="70" height="15" fill="#ff9800"/>
+                    <text x="230" y="227" font-size="12">个体 2: 35%</text>
+                    
+                    <rect x="20" y="240" width="200" height="15" fill="#e0e0e0"/>
+                    <rect x="20" y="240" width="56" height="15" fill="#f44336"/>
+                    <text x="230" y="252" font-size="12">个体 3: 28%</text>
+                </svg>
+            </div>
+        </div>
+
+        <!-- 步骤 5 -->
+        <div class="step">
+            <h3><span class="step-number">5</span>生成后代（基于父代）</h3>
+            <p>这是算法最核心的创新：让 LLM 看到父代公式，并生成改进的后代公式。</p>
+            
+            <div class="code-block">
+<span class="keyword">async def</span> <span class="function">generate_generation_population</span>():
+    tasks = []
+    semaphore = asyncio.Semaphore(<span class="number">10</span>)
+    
+    <span class="keyword">async def</span> <span class="function">create_individual</span>(idx):
+        func_list = func_lists[idx]  <span class="comment"># 两个父代的公式</span>
+        <span class="keyword">async with</span> semaphore:
+            <span class="keyword">for</span> attempt <span class="keyword">in</span> range(<span class="number">5</span>):
+                <span class="keyword">try</span>:
+                    result = <span class="keyword">await</span> async_single_call(
+                        client, base64_image, x, y, 
+                        model=model,
+                        function_list=func_list,  <span class="comment"># 传入父代公式</span>
+                        system_prompt=system_prompt,
+                        stats=api_stats,
+                        plot_parents=plot_parents,  <span class="comment"># 可选：在图中显示父代曲线</span>
+                        imports=imports
+                    )
+                    <span class="keyword">if</span> result <span class="keyword">is not</span> None:
+                        <span class="keyword">return</span> result
+                <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+                    <span class="keyword">pass</span>
+            <span class="keyword">return</span> None
+    
+    <span class="comment"># 创建新一代（如果使用精英主义，则少一个）</span>
+    <span class="keyword">for</span> i <span class="keyword">in</span> range(population_size - (<span class="number">1</span> <span class="keyword">if</span> elite <span class="keyword">else</span> <span class="number">0</span>)):
+        tasks.append(create_individual(i))
+    
+    results = <span class="keyword">await</span> asyncio.gather(*tasks)
+    <span class="keyword">return</span> [r <span class="keyword">for</span> r <span class="keyword">in</span> results <span class="keyword">if</span> r <span class="keyword">is not</span> None]
+
+gen_population = execute_async_in_loop(generate_generation_population())
+
+<span class="comment"># 如果使用精英主义，保留上一代的最优个体</span>
+<span class="keyword">if</span> elite:
+    population = [best_pop] + gen_population
+<span class="keyword">else</span>:
+    population = gen_population
+            </div>
+
+            <div class="diagram">
+                <h4>LLM 如何生成后代</h4>
+                <svg width="700" height="350" style="max-width: 100%; height: auto;">
+                    <!-- Input to LLM -->
+                    <rect x="50" y="30" width="250" height="100" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="8"/>
+                    <text x="175" y="55" text-anchor="middle" font-weight="bold" fill="#1976d2">输入给 LLM</text>
+                    <text x="175" y="80" text-anchor="middle" font-size="13">📊 数据图像（base64）</text>
+                    <text x="175" y="100" text-anchor="middle" font-size="13">👨 父代 1: sin(x) * params[0]</text>
+                    <text x="175" y="120" text-anchor="middle" font-size="13">👩 父代 2: x² * params[0]</text>
+                    
+                    <!-- LLM -->
+                    <rect x="250" y="160" width="200" height="80" fill="#667eea" rx="10"/>
+                    <text x="350" y="195" text-anchor="middle" fill="white" font-weight="bold" font-size="20">🤖 LLM</text>
+                    <text x="350" y="220" text-anchor="middle" fill="white" font-size="14">(GPT-4 等)</text>
+                    
+                    <!-- Arrow down -->
+                    <line x1="175" y1="130" x2="300" y2="160" stroke="#764ba2" stroke-width="3" marker-end="url(#arrowhead2)"/>
+                    
+                    <!-- Prompt example -->
+                    <rect x="400" y="30" width="280" height="100" fill="#fff9c4" stroke="#f57f17" stroke-width="2" rx="8"/>
+                    <text x="540" y="50" text-anchor="middle" font-weight="bold" fill="#f57f17">提示词示例</text>
+                    <text x="540" y="70" text-anchor="middle" font-size="11">"分析图像中的数据。</text>
+                    <text x="540" y="85" text-anchor="middle" font-size="11">已有公式: curve_1, curve_2</text>
+                    <text x="540" y="100" text-anchor="middle" font-size="11">提供改进的数学公式，</text>
+                    <text x="540" y="115" text-anchor="middle" font-size="11">结合这些公式的优点。"</text>
+                    
+                    <!-- Arrow to output -->
+                    <line x1="350" y1="240" x2="350" y2="280" stroke="#764ba2" stroke-width="3" marker-end="url(#arrowhead2)"/>
+                    
+                    <!-- Output from LLM -->
+                    <rect x="225" y="280" width="250" height="50" fill="#c8e6c9" stroke="#2e7d32" stroke-width="2" rx="8"/>
+                    <text x="350" y="300" text-anchor="middle" font-weight="bold" fill="#2e7d32">输出（后代）</text>
+                    <text x="350" y="320" text-anchor="middle" font-size="14">🧬 sin(x²) * params[0] + params[1]</text>
+                    
+                    <defs>
+                        <marker id="arrowhead2" markerWidth="10" markerHeight="10" refX="5" refY="5" orient="auto">
+                            <polygon points="0 0, 10 5, 0 10" fill="#764ba2"/>
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+
+            <div class="success-box">
+                <strong>✅ LLM 的优势：</strong>
+                <ul>
+                    <li>理解数学结构和模式</li>
+                    <li>可以"看到"数据的可视化图像</li>
+                    <li>能够组合和改进父代公式</li>
+                    <li>生成符合语法的 Python 代码</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 步骤 6 -->
+        <div class="step">
+            <h3><span class="step-number">6</span>精英主义（可选）</h3>
+            <p>如果启用 <code>elite=True</code>，算法会保留上一代的最优个体，确保不会退化。</p>
+            
+            <div class="code-block">
+population = []
+<span class="keyword">if</span> elite:
+    <span class="comment"># 保留最优个体</span>
+    population.append(best_pop)
+
+<span class="comment"># 生成其余的新个体</span>
+gen_population = execute_async_in_loop(generate_generation_population())
+
+<span class="keyword">if</span> elite:
+    population.extend(gen_population)
+<span class="keyword">else</span>:
+    population = gen_population
+            </div>
+
+            <div class="diagram">
+                <h4>精英主义 vs 非精英主义</h4>
+                <svg width="700" height="280" style="max-width: 100%; height: auto;">
+                    <!-- Without elitism -->
+                    <text x="175" y="30" text-anchor="middle" font-weight="bold" font-size="16">无精英主义</text>
+                    
+                    <rect x="50" y="50" width="250" height="80" fill="#ffcdd2" stroke="#c62828" stroke-width="2" rx="8"/>
+                    <text x="175" y="75" text-anchor="middle" font-size="14">第 N 代：最优分数 = -0.01</text>
+                    <text x="175" y="100" text-anchor="middle" font-size="14">⬇️</text>
+                    <text x="175" y="120" text-anchor="middle" font-size="14">第 N+1 代：可能最优分数 = -0.05</text>
+                    <text x="175" y="145" text-anchor="middle" font-size="12" fill="#c62828">❌ 性能可能退化！</text>
+                    
+                    <!-- With elitism -->
+                    <text x="525" y="30" text-anchor="middle" font-weight="bold" font-size="16">有精英主义</text>
+                    
+                    <rect x="400" y="50" width="250" height="80" fill="#c8e6c9" stroke="#2e7d32" stroke-width="2" rx="8"/>
+                    <text x="525" y="75" text-anchor="middle" font-size="14">第 N 代：最优分数 = -0.01</text>
+                    <text x="525" y="100" text-anchor="middle" font-size="14">⬇️ 保留最优</text>
+                    <text x="525" y="120" text-anchor="middle" font-size="14">第 N+1 代：至少最优分数 = -0.01</text>
+                    <text x="525" y="145" text-anchor="middle" font-size="12" fill="#2e7d32">✅ 单调不减！</text>
+                    
+                    <!-- Performance comparison chart -->
+                    <text x="350" y="180" text-anchor="middle" font-weight="bold">性能对比</text>
+                    
+                    <!-- Axes -->
+                    <line x1="80" y1="270" x2="620" y2="270" stroke="black" stroke-width="2"/>
+                    <line x1="80" y1="200" x2="80" y2="270" stroke="black" stroke-width="2"/>
+                    
+                    <text x="350" y="265" text-anchor="middle" font-size="12">代数 →</text>
+                    <text x="50" y="235" font-size="12">性能</text>
+                    
+                    <!-- Without elitism line (wavy) -->
+                    <polyline points="100,260 180,240 260,250 340,235 420,245 500,230 580,240" 
+                              fill="none" stroke="#f44336" stroke-width="2" stroke-dasharray="5,5"/>
+                    <text x="600" y="245" font-size="12" fill="#f44336">无精英</text>
+                    
+                    <!-- With elitism line (monotonic) -->
+                    <polyline points="100,260 180,240 260,230 340,220 420,215 500,210 580,205" 
+                              fill="none" stroke="#4caf50" stroke-width="3"/>
+                    <text x="600" y="210" font-size="12" fill="#4caf50">有精英</text>
+                </svg>
+            </div>
+        </div>
+
+        <!-- 步骤 7 -->
+        <div class="step">
+            <h3><span class="step-number">7</span>迭代与终止</h3>
+            <p>重复步骤 4-6，直到满足终止条件或达到最大代数。</p>
+            
+            <div class="code-block">
+<span class="keyword">for</span> generation <span class="keyword">in</span> range(num_of_generations - <span class="number">1</span>):
+    <span class="comment"># 选择父代</span>
+    selected_population = select_parents(population, probs)
+    
+    <span class="comment"># 生成后代</span>
+    new_population = generate_offspring(selected_population)
+    
+    <span class="comment"># 评估和排序</span>
+    new_population.sort(key=<span class="keyword">lambda</span> x: x[<span class="string">'score'</span>])
+    best_pop = new_population[-<span class="number">1</span>]
+    populations.append(new_population)
+    
+    <span class="comment"># 检查提前终止条件</span>
+    <span class="keyword">if</span> best_pop[<span class="string">'score'</span>] > -exit_condition:
+        logger.info(<span class="string">f"Exit condition met after generation </span>{generation+<span class="number">1</span>}<span class="string">"</span>)
+        <span class="keyword">return</span> populations
+    
+    population = new_population
+
+<span class="comment"># 打印统计信息</span>
+<span class="function">print</span>(<span class="string">f"\n</span>{api_stats}<span class="string">"</span>)
+<span class="keyword">return</span> populations
+            </div>
+
+            <div class="info-box">
+                <strong>💡 终止条件：</strong>
+                <ul>
+                    <li><strong>达到目标精度</strong>：best_score > -exit_condition（例如，χ²_n < 1e-5）</li>
+                    <li><strong>达到最大代数</strong>：完成所有代数的迭代</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 返回值 -->
+        <h2>📤 返回值</h2>
+        <div class="info-box">
+            <p><strong>返回类型</strong>：<code>List[List[Dict]]</code></p>
+            <p>一个嵌套列表，其中：</p>
+            <ul>
+                <li>外层列表：每个元素代表一代（generation）</li>
+                <li>内层列表：每个元素代表一个个体（candidate formula）</li>
+                <li>字典包含以下键：
+                    <ul>
+                        <li><code>params</code>: 拟合参数</li>
+                        <li><code>score</code>: 适应度分数（-χ²_n）</li>
+                        <li><code>ansatz</code>: 公式字符串</li>
+                        <li><code>Num_params</code>: 参数个数</li>
+                        <li><code>response</code>: LLM 原始响应</li>
+                        <li><code>prompt</code>: 使用的提示词</li>
+                        <li><code>function_list</code>: 父代公式列表（如果有）</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+
+        <div class="code-block">
+<span class="comment"># 使用示例</span>
+populations = run_genetic(
+    client=client,
+    base64_image=img,
+    x=x_data,
+    y=y_data,
+    population_size=<span class="number">10</span>,
+    num_of_generations=<span class="number">5</span>,
+    temperature=<span class="number">1.0</span>,
+    model=<span class="string">"openai/gpt-4"</span>,
+    exit_condition=<span class="number">1e-5</span>,
+    elite=<span class="keyword">True</span>
+)
+
+<span class="comment"># 获取最优解</span>
+best_generation = populations[-<span class="number">1</span>]  <span class="comment"># 最后一代</span>
+best_individual = best_generation[-<span class="number">1</span>]  <span class="comment"># 最优个体</span>
+
+<span class="function">print</span>(<span class="string">f"最优公式: </span>{best_individual[<span class="string">'ansatz'</span>]}<span class="string">"</span>)
+<span class="function">print</span>(<span class="string">f"拟合分数: </span>{best_individual[<span class="string">'score'</span>]}<span class="string">"</span>)
+<span class="function">print</span>(<span class="string">f"参数: </span>{best_individual[<span class="string">'params'</span>]}<span class="string">"</span>)
+        </div>
+
+        <!-- 完整流程图 -->
+        <h2>🎯 完整算法流程总结</h2>
+        <div class="diagram">
+            <svg width="800" height="750" style="max-width: 100%; height: auto;">
+                <!-- Start -->
+                <ellipse cx="400" cy="40" rx="80" ry="30" fill="#4caf50" stroke="#2e7d32" stroke-width="3"/>
+                <text x="400" y="48" text-anchor="middle" fill="white" font-weight="bold">开始</text>
+                
+                <!-- Step 1 -->
+                <rect x="300" y="90" width="200" height="50" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="8"/>
+                <text x="400" y="120" text-anchor="middle" font-size="14">1. 检查常数基线</text>
+                <line x1="400" y1="70" x2="400" y2="90" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+                
+                <!-- Decision 1 -->
+                <polygon points="400,160 470,190 400,220 330,190" fill="#fff9c4" stroke="#f57f17" stroke-width="2"/>
+                <text x="400" y="195" text-anchor="middle" font-size="12">足够好?</text>
+                <line x1="400" y1="140" x2="400" y2="160" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+                
+                <text x="510" y="195" font-size="12" fill="#4caf50">是</text>
+                <line x1="470" y1="190" x2="550" y2="190" stroke="#4caf50" stroke-width="2" marker-end="url(#arrow)"/>
+                <line x1="550" y1="190" x2="550" y2="700" stroke="#4caf50" stroke-width="2"/>
+                <line x1="550" y1="700" x2="400" y2="700" stroke="#4caf50" stroke-width="2" marker-end="url(#arrow)"/>
+                
+                <text x="310" y="230" font-size="12" fill="#f44336">否</text>
+                
+                <!-- Step 2 -->
+                <rect x="300" y="240" width="200" height="50" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="8"/>
+                <text x="400" y="263" text-anchor="middle" font-size="13">2. 生成初始种群</text>
+                <text x="400" y="280" text-anchor="middle" font-size="11">(异步并行调用 LLM)</text>
+                <line x1="400" y1="220" x2="400" y2="240" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+                
+                <!-- Step 3 -->
+                <rect x="300" y="310" width="200" height="50" fill="#e3f2fd" stroke="#1976d2" stroke-width="2" rx="8"/>
+                <text x="400" y="340" text-anchor="middle" font-size="14">3. 评估与排序</text>
+                <line x1="400" y1="290" x2="400" y2="310" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+                
+                <!-- Loop start marker -->
+                <text x="100" y="390" font-weight="bold" fill="#764ba2" font-size="16">开始循环</text>
+                <line x1="150" y1="395" x2="300" y2="395" stroke="#764ba2" stroke-width="2" stroke-dasharray="5,5"/>
+                
+                <!-- Step 4 -->
+                <rect x="300" y="380" width="200" height="50" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2" rx="8"/>
+                <text x="400" y="403" text-anchor="middle" font-size="13">4. 选择父代</text>
+                <text x="400" y="420" text-anchor="middle" font-size="11">(温度调控选择)</text>
+                <line x1="400" y1="360" x2="400" y2="380" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+                
+                <!-- Step 5 -->
+                <rect x="300" y="450" width="200" height="50" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2" rx="8"/>
+                <text x="400" y="473" text-anchor="middle" font-size="13">5. 生成后代</text>
+                <text x="400" y="490" text-anchor="middle" font-size="11">(LLM 基于父代创新)</text>
+                <line x1="400" y1="430" x2="400" y2="450" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+                
+                <!-- Step 6 -->
+                <rect x="300" y="520" width="200" height="50" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="2" rx="8"/>
+                <text x="400" y="543" text-anchor="middle" font-size="13">6. 评估新一代</text>
+                <text x="400" y="560" text-anchor="middle" font-size="11">(精英主义可选)</text>
+                <line x1="400" y1="500" x2="400" y2="520" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+                
+                <!-- Decision 2 -->
+                <polygon points="400,590 480,620 400,650 320,620" fill="#fff9c4" stroke="#f57f17" stroke-width="2"/>
+                <text x="400" y="618" text-anchor="middle" font-size="11">满足终止</text>
+                <text x="400" y="632" text-anchor="middle" font-size="11">条件?</text>
+                <line x1="400" y1="570" x2="400" y2="590" stroke="black" stroke-width="2" marker-end="url(#arrow)"/>
+                
+                <text x="510" y="625" font-size="12" fill="#4caf50">是</text>
+                <line x1="480" y1="620" x2="600" y2="620" stroke="#4caf50" stroke-width="2" marker-end="url(#arrow)"/>
+                <line x1="600" y1="620" x2="600" y2="700" stroke="#4caf50" stroke-width="2"/>
+                <line x1="600" y1="700" x2="400" y2="700" stroke="#4caf50" stroke-width="2" marker-end="url(#arrow)"/>
+                
+                <text x="300" y="660" font-size="12" fill="#f44336">否</text>
+                
+                <!-- Loop back -->
+                <line x1="320" y1="620" x2="250" y2="620" stroke="#f44336" stroke-width="2"/>
+                <line x1="250" y1="620" x2="250" y2="405" stroke="#f44336" stroke-width="2"/>
+                <line x1="250" y1="405" x2="300" y2="405" stroke="#f44336" stroke-width="2" marker-end="url(#arrow)"/>
+                <text x="230" y="510" font-size="11" fill="#f44336" transform="rotate(-90 230 510)">下一代</text>
+                
+                <!-- End -->
+                <ellipse cx="400" cy="710" rx="80" ry="30" fill="#f44336" stroke="#c62828" stroke-width="3"/>
+                <text x="400" y="718" text-anchor="middle" fill="white" font-weight="bold">返回结果</text>
+                
+                <defs>
+                    <marker id="arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                        <path d="M0,0 L0,6 L9,3 z" fill="black"/>
+                    </marker>
+                </defs>
+            </svg>
+        </div>
+
+        <!-- 实际应用示例 -->
+        <h2>💻 实际应用示例</h2>
+        <div class="code-block">
+<span class="keyword">import</span> numpy <span class="keyword">as</span> np
+<span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
+<span class="keyword">from</span> llmlex.llmlex <span class="keyword">import</span> run_genetic
+<span class="keyword">from</span> llmlex.images <span class="keyword">import</span> generate_base64_image
+<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+
+<span class="comment"># 1. 生成测试数据 (例如: y = sin(x) + 0.1 * x²)</span>
+x = np.linspace(<span class="number">0</span>, <span class="number">10</span>, <span class="number">100</span>)
+y = np.sin(x) + <span class="number">0.1</span> * x**<span class="number">2</span> + np.random.normal(<span class="number">0</span>, <span class="number">0.1</span>, len(x))
+
+<span class="comment"># 2. 创建数据可视化</span>
+fig, ax = plt.subplots(figsize=(<span class="number">8</span>, <span class="number">6</span>))
+base64_img = generate_base64_image(fig, ax, x, y)
+
+<span class="comment"># 3. 初始化 OpenAI 客户端</span>
+client = OpenAI(
+    base_url=<span class="string">"https://openrouter.ai/api/v1"</span>,
+    api_key=<span class="string">"your-api-key-here"</span>
+)
+
+<span class="comment"># 4. 运行遗传算法</span>
+populations = run_genetic(
+    client=client,
+    base64_image=base64_img,
+    x=x,
+    y=y,
+    population_size=<span class="number">10</span>,         <span class="comment"># 每代 10 个候选公式</span>
+    num_of_generations=<span class="number">5</span>,       <span class="comment"># 进化 5 代</span>
+    temperature=<span class="number">1.0</span>,            <span class="comment"># 平衡的选择策略</span>
+    model=<span class="string">"openai/gpt-4o"</span>,     <span class="comment"># 使用 GPT-4</span>
+    exit_condition=<span class="number">1e-5</span>,        <span class="comment"># 目标精度</span>
+    elite=<span class="keyword">True</span>,                 <span class="comment"># 使用精英主义</span>
+    plot_parents=<span class="keyword">False</span>          <span class="comment"># 不在图中显示父代</span>
+)
+
+<span class="comment"># 5. 提取最优解</span>
+best_individual = populations[-<span class="number">1</span>][-<span class="number">1</span>]
+
+<span class="function">print</span>(<span class="string">"="</span>*<span class="number">50</span>)
+<span class="function">print</span>(<span class="string">"🎉 最优公式找到！"</span>)
+<span class="function">print</span>(<span class="string">"="</span>*<span class="number">50</span>)
+<span class="function">print</span>(<span class="string">f"公式: </span>{best_individual[<span class="string">'ansatz'</span>]}<span class="string">"</span>)
+<span class="function">print</span>(<span class="string">f"分数: </span>{best_individual[<span class="string">'score'</span>]:<span class="string">.6f}"</span>)
+<span class="function">print</span>(<span class="string">f"参数: </span>{best_individual[<span class="string">'params'</span>]}<span class="string">"</span>)
+<span class="function">print</span>(<span class="string">"="</span>*<span class="number">50</span>)
+
+<span class="comment"># 6. 可视化结果</span>
+<span class="keyword">from</span> llmlex.response <span class="keyword">import</span> fun_convert
+curve, _, _ = fun_convert(best_individual[<span class="string">'ansatz'</span>])
+y_pred = curve(x, *best_individual[<span class="string">'params'</span>])
+
+plt.figure(figsize=(<span class="number">10</span>, <span class="number">6</span>))
+plt.plot(x, y, <span class="string">'o'</span>, label=<span class="string">'原始数据'</span>, alpha=<span class="number">0.5</span>)
+plt.plot(x, y_pred, <span class="string">'-'</span>, linewidth=<span class="number">2</span>, label=<span class="string">'拟合曲线'</span>)
+plt.legend()
+plt.title(<span class="string">'遗传算法拟合结果'</span>)
+plt.xlabel(<span class="string">'x'</span>)
+plt.ylabel(<span class="string">'y'</span>)
+plt.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
+plt.show()
+        </div>
+
+        <!-- 优势与局限 -->
+        <h2>⚖️ 优势与局限性</h2>
+        
+        <div class="success-box">
+            <h3>✅ 主要优势</h3>
+            <ul>
+                <li><strong>强大的数学理解</strong>：LLM 可以理解复杂的数学模式和结构</li>
+                <li><strong>视觉理解</strong>：可以"看到"数据的可视化，直观理解趋势</li>
+                <li><strong>灵活的表达</strong>：不受预定义函数集的限制</li>
+                <li><strong>高效的并行化</strong>：异步并行大幅提升速度</li>
+                <li><strong>自适应进化</strong>：能够组合父代的优点创造更好的后代</li>
+            </ul>
+        </div>
+        
+        <div class="warning-box">
+            <h3>⚠️ 局限性</h3>
+            <ul>
+                <li><strong>API 成本</strong>：每次调用 LLM 都有费用（特别是 GPT-4）</li>
+                <li><strong>不确定性</strong>：LLM 的输出有随机性，可能需要多次尝试</li>
+                <li><strong>速率限制</strong>：API 有调用频率限制</li>
+                <li><strong>复杂度</strong>：对于简单问题可能过于复杂</li>
+                <li><strong>可解释性</strong>：LLM 如何"想出"公式的过程是黑盒</li>
+            </ul>
+        </div>
+
+        <!-- 调优建议 -->
+        <h2>🎛️ 参数调优建议</h2>
+        
+        <table class="parameter-table">
+            <tr>
+                <th>场景</th>
+                <th>推荐参数</th>
+                <th>说明</th>
+            </tr>
+            <tr>
+                <td>简单函数（如多项式）</td>
+                <td>
+                    population_size=5<br>
+                    num_of_generations=3<br>
+                    temperature=0.5
+                </td>
+                <td>较小的种群和代数即可，偏贪婪的选择</td>
+            </tr>
+            <tr>
+                <td>复杂函数（多峰、振荡）</td>
+                <td>
+                    population_size=15<br>
+                    num_of_generations=7<br>
+                    temperature=1.5
+                </td>
+                <td>需要更多探索，增加种群和代数</td>
+            </tr>
+            <tr>
+                <td>高精度要求</td>
+                <td>
+                    exit_condition=1e-7<br>
+                    elite=True<br>
+                    model="gpt-4"
+                </td>
+                <td>使用更严格的终止条件和更强的模型</td>
+            </tr>
+            <tr>
+                <td>成本敏感</td>
+                <td>
+                    population_size=5<br>
+                    model="gpt-3.5-turbo"<br>
+                    elite=True
+                </td>
+                <td>减少种群大小，使用便宜的模型</td>
+            </tr>
+        </table>
+
+        <!-- 总结 -->
+        <div class="info-box" style="margin-top: 40px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none;">
+            <h2 style="color: white; border: none;">🎓 总结</h2>
+            <p style="font-size: 1.1em;">
+                <strong>run_genetic</strong> 是一个创新的符号回归方法，它将遗传算法的进化思想与大语言模型的数学理解能力相结合。
+                通过让 LLM "看到"数据并基于父代公式生成改进的后代，这个方法能够发现复杂的数学模式，
+                而无需预定义函数库。这是人工智能在科学发现领域的一个激动人心的应用。
+            </p>
+        </div>
+
+        <footer style="text-align: center; margin-top: 50px; padding: 20px; color: #666; border-top: 2px solid #eee;">
+            <p>📚 更多信息请参考 <a href="https://github.com/yourusername/llmlex" style="color: #667eea; text-decoration: none; font-weight: bold;">llmlex GitHub 仓库</a></p>
+            <p style="margin-top: 10px;">Created with ❤️ for understanding symbolic regression with LLMs</p>
+        </footer>
+    </div>
+</body>
+</html>
+
