@@ -83,18 +83,21 @@
             border-radius: 8px;
             overflow-x: auto;
             margin: 15px 0;
-            font-family: 'Courier New', monospace;
+            font-family: 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
             font-size: 0.95em;
-            line-height: 1.6;
+            line-height: 1.8;
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            white-space: pre;
         }
         
         .code-block .keyword {
             color: #c678dd;
+            font-weight: 600;
         }
         
         .code-block .function {
             color: #61afef;
+            font-weight: 500;
         }
         
         .code-block .string {
@@ -107,6 +110,22 @@
         }
         
         .code-block .number {
+            color: #d19a66;
+        }
+        
+        .code-block .operator {
+            color: #56b6c2;
+        }
+        
+        .code-block .builtin {
+            color: #e5c07b;
+        }
+        
+        .code-block .variable {
+            color: #e06c75;
+        }
+        
+        .code-block .decorator {
             color: #d19a66;
         }
         
@@ -338,22 +357,20 @@
             <h3><span class="step-number">1</span>初始化与基线检查</h3>
             <p>算法首先检查一个<span class="highlight">常数函数</span>是否足够好。这是一个重要的优化，避免不必要的计算。</p>
             
-            <div class="code-block">
-<span class="comment"># 清除速率限制锁</span>
-clear_rate_limit_lock()
+            <div class="code-block"><span class="comment"># 清除速率限制锁</span>
+<span class="function">clear_rate_limit_lock</span>()
 
 <span class="comment"># 初始化统计追踪器</span>
-api_stats = APICallStats()
+<span class="variable">api_stats</span> <span class="operator">=</span> <span class="function">APICallStats</span>()
 
 <span class="comment"># 检查常数函数作为基线</span>
-curve = <span class="keyword">lambda</span> x, *params: params[<span class="number">0</span>] * np.ones(len(x))
-params, _ = curve_fit(curve, x, y, p0=[<span class="number">1.0</span>])
-n_chi_squared = get_n_chi_squared(x, y, curve, params)
+<span class="variable">curve</span> <span class="operator">=</span> <span class="keyword">lambda</span> <span class="variable">x</span>, <span class="operator">*</span><span class="variable">params</span>: <span class="variable">params</span>[<span class="number">0</span>] <span class="operator">*</span> <span class="builtin">np</span>.<span class="function">ones</span>(<span class="builtin">len</span>(<span class="variable">x</span>))
+<span class="variable">params</span>, <span class="variable">_</span> <span class="operator">=</span> <span class="function">curve_fit</span>(<span class="variable">curve</span>, <span class="variable">x</span>, <span class="variable">y</span>, p0<span class="operator">=</span>[<span class="number">1.0</span>])
+<span class="variable">n_chi_squared</span> <span class="operator">=</span> <span class="function">get_n_chi_squared</span>(<span class="variable">x</span>, <span class="variable">y</span>, <span class="variable">curve</span>, <span class="variable">params</span>)
 
-<span class="keyword">if</span> n_chi_squared <= exit_condition:
+<span class="keyword">if</span> <span class="variable">n_chi_squared</span> <span class="operator">&lt;=</span> <span class="variable">exit_condition</span>:
     <span class="comment"># 常数函数已经足够好，直接返回</span>
-    <span class="keyword">return</span> populations
-            </div>
+    <span class="keyword">return</span> <span class="variable">populations</span></div>
 
             <div class="info-box">
                 <strong>💡 为什么要检查常数函数？</strong><br>
@@ -371,45 +388,43 @@ n_chi_squared = get_n_chi_squared(x, y, curve, params)
             <h3><span class="step-number">2</span>生成初始种群（异步并行）</h3>
             <p>这是算法的核心创新之一：使用<span class="highlight">异步并行</span>调用 LLM 来生成初始种群。</p>
             
-            <div class="code-block">
-<span class="keyword">async def</span> <span class="function">generate_population</span>():
-    tasks = []
-    semaphore = asyncio.Semaphore(<span class="number">10</span>)  <span class="comment"># 限制并发请求数为 10</span>
+            <div class="code-block"><span class="keyword">async</span> <span class="keyword">def</span> <span class="function">generate_population</span>():
+    <span class="variable">tasks</span> <span class="operator">=</span> []
+    <span class="variable">semaphore</span> <span class="operator">=</span> <span class="builtin">asyncio</span>.<span class="function">Semaphore</span>(<span class="number">10</span>)  <span class="comment"># 限制并发请求数为 10</span>
     
-    <span class="keyword">async def</span> <span class="function">create_individual</span>():
-        <span class="keyword">async with</span> semaphore:
-            max_attempts = <span class="number">5</span>
-            <span class="keyword">for</span> attempt <span class="keyword">in</span> range(max_attempts):
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">create_individual</span>():
+        <span class="keyword">async</span> <span class="keyword">with</span> <span class="variable">semaphore</span>:
+            <span class="variable">max_attempts</span> <span class="operator">=</span> <span class="number">5</span>
+            <span class="keyword">for</span> <span class="variable">attempt</span> <span class="keyword">in</span> <span class="builtin">range</span>(<span class="variable">max_attempts</span>):
                 <span class="keyword">try</span>:
                     <span class="comment"># 指数退避策略</span>
-                    backoff_time = <span class="number">0.1</span> * (<span class="number">2</span> ** attempt)
+                    <span class="variable">backoff_time</span> <span class="operator">=</span> <span class="number">0.1</span> <span class="operator">*</span> (<span class="number">2</span> <span class="operator">**</span> <span class="variable">attempt</span>)
                     
                     <span class="comment"># 调用 LLM 生成公式</span>
-                    result = <span class="keyword">await</span> async_single_call(
-                        client, base64_image, x, y, 
-                        model=model, system_prompt=system_prompt,
-                        stats=api_stats, imports=imports
+                    <span class="variable">result</span> <span class="operator">=</span> <span class="keyword">await</span> <span class="function">async_single_call</span>(
+                        <span class="variable">client</span>, <span class="variable">base64_image</span>, <span class="variable">x</span>, <span class="variable">y</span>, 
+                        model<span class="operator">=</span><span class="variable">model</span>, system_prompt<span class="operator">=</span><span class="variable">system_prompt</span>,
+                        stats<span class="operator">=</span><span class="variable">api_stats</span>, imports<span class="operator">=</span><span class="variable">imports</span>
                     )
-                    <span class="keyword">if</span> result <span class="keyword">is not</span> None:
-                        <span class="keyword">return</span> result
+                    <span class="keyword">if</span> <span class="variable">result</span> <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>:
+                        <span class="keyword">return</span> <span class="variable">result</span>
                     
-                    <span class="keyword">await</span> asyncio.sleep(backoff_time)
-                <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
-                    <span class="keyword">await</span> asyncio.sleep(backoff_time)
+                    <span class="keyword">await</span> <span class="builtin">asyncio</span>.<span class="function">sleep</span>(<span class="variable">backoff_time</span>)
+                <span class="keyword">except</span> <span class="builtin">Exception</span> <span class="keyword">as</span> <span class="variable">e</span>:
+                    <span class="keyword">await</span> <span class="builtin">asyncio</span>.<span class="function">sleep</span>(<span class="variable">backoff_time</span>)
             
-            <span class="keyword">return</span> None
+            <span class="keyword">return</span> <span class="keyword">None</span>
     
     <span class="comment"># 创建所有任务</span>
-    <span class="keyword">for</span> i <span class="keyword">in</span> range(population_size):
-        tasks.append(create_individual())
+    <span class="keyword">for</span> <span class="variable">i</span> <span class="keyword">in</span> <span class="builtin">range</span>(<span class="variable">population_size</span>):
+        <span class="variable">tasks</span>.<span class="function">append</span>(<span class="function">create_individual</span>())
     
     <span class="comment"># 等待所有任务完成</span>
-    results = <span class="keyword">await</span> asyncio.gather(*tasks)
-    <span class="keyword">return</span> [r <span class="keyword">for</span> r <span class="keyword">in</span> results <span class="keyword">if</span> r <span class="keyword">is not</span> None]
+    <span class="variable">results</span> <span class="operator">=</span> <span class="keyword">await</span> <span class="builtin">asyncio</span>.<span class="function">gather</span>(<span class="operator">*</span><span class="variable">tasks</span>)
+    <span class="keyword">return</span> [<span class="variable">r</span> <span class="keyword">for</span> <span class="variable">r</span> <span class="keyword">in</span> <span class="variable">results</span> <span class="keyword">if</span> <span class="variable">r</span> <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>]
 
 <span class="comment"># 安全地执行异步代码</span>
-population = execute_async_in_loop(generate_population())
-            </div>
+<span class="variable">population</span> <span class="operator">=</span> <span class="function">execute_async_in_loop</span>(<span class="function">generate_population</span>())</div>
 
             <div class="diagram">
                 <h4>并行生成示意图</h4>
@@ -479,30 +494,28 @@ population = execute_async_in_loop(generate_population())
             <h3><span class="step-number">3</span>评估适应度与排序</h3>
             <p>生成的每个公式都需要被评估。适应度分数越高，公式越好。</p>
             
-            <div class="code-block">
-<span class="comment"># 处理非有限分数（NaN 和 Inf）</span>
-non_finite_scores = [p <span class="keyword">for</span> p <span class="keyword">in</span> population <span class="keyword">if not</span> np.isfinite(p[<span class="string">'score'</span>])]
-<span class="keyword">if</span> non_finite_scores:
-    finite_scores = [ind[<span class="string">'score'</span>] <span class="keyword">for</span> ind <span class="keyword">in</span> population <span class="keyword">if</span> np.isfinite(ind[<span class="string">'score'</span>])]
-    <span class="keyword">if</span> finite_scores:
-        min_score = min(finite_scores)
-        bad_score = <span class="number">2</span> * min_score <span class="keyword">if</span> min_score < <span class="number">0</span> <span class="keyword">else</span> min_score - abs(min_score)
+            <div class="code-block"><span class="comment"># 处理非有限分数（NaN 和 Inf）</span>
+<span class="variable">non_finite_scores</span> <span class="operator">=</span> [<span class="variable">p</span> <span class="keyword">for</span> <span class="variable">p</span> <span class="keyword">in</span> <span class="variable">population</span> <span class="keyword">if</span> <span class="keyword">not</span> <span class="builtin">np</span>.<span class="function">isfinite</span>(<span class="variable">p</span>[<span class="string">'score'</span>])]
+<span class="keyword">if</span> <span class="variable">non_finite_scores</span>:
+    <span class="variable">finite_scores</span> <span class="operator">=</span> [<span class="variable">ind</span>[<span class="string">'score'</span>] <span class="keyword">for</span> <span class="variable">ind</span> <span class="keyword">in</span> <span class="variable">population</span> <span class="keyword">if</span> <span class="builtin">np</span>.<span class="function">isfinite</span>(<span class="variable">ind</span>[<span class="string">'score'</span>])]
+    <span class="keyword">if</span> <span class="variable">finite_scores</span>:
+        <span class="variable">min_score</span> <span class="operator">=</span> <span class="builtin">min</span>(<span class="variable">finite_scores</span>)
+        <span class="variable">bad_score</span> <span class="operator">=</span> <span class="number">2</span> <span class="operator">*</span> <span class="variable">min_score</span> <span class="keyword">if</span> <span class="variable">min_score</span> <span class="operator">&lt;</span> <span class="number">0</span> <span class="keyword">else</span> <span class="variable">min_score</span> <span class="operator">-</span> <span class="builtin">abs</span>(<span class="variable">min_score</span>)
     <span class="keyword">else</span>:
-        bad_score = -<span class="number">1e8</span>
+        <span class="variable">bad_score</span> <span class="operator">=</span> <span class="operator">-</span><span class="number">1e8</span>
     
     <span class="comment"># 将所有非有限分数设置为相同的坏分数</span>
-    <span class="keyword">for</span> p <span class="keyword">in</span> non_finite_scores:
-        p[<span class="string">'score'</span>] = bad_score
+    <span class="keyword">for</span> <span class="variable">p</span> <span class="keyword">in</span> <span class="variable">non_finite_scores</span>:
+        <span class="variable">p</span>[<span class="string">'score'</span>] <span class="operator">=</span> <span class="variable">bad_score</span>
 
 <span class="comment"># 按分数排序（分数越高越好）</span>
-population.sort(key=<span class="keyword">lambda</span> x: x[<span class="string">'score'</span>])
-populations.append(population)
-best_pop = population[-<span class="number">1</span>]  <span class="comment"># 最后一个是最好的</span>
+<span class="variable">population</span>.<span class="function">sort</span>(key<span class="operator">=</span><span class="keyword">lambda</span> <span class="variable">x</span>: <span class="variable">x</span>[<span class="string">'score'</span>])
+<span class="variable">populations</span>.<span class="function">append</span>(<span class="variable">population</span>)
+<span class="variable">best_pop</span> <span class="operator">=</span> <span class="variable">population</span>[<span class="operator">-</span><span class="number">1</span>]  <span class="comment"># 最后一个是最好的</span>
 
 <span class="comment"># 检查是否满足退出条件</span>
-<span class="keyword">if</span> best_pop[<span class="string">'score'</span>] > -exit_condition:
-    <span class="keyword">return</span> populations  <span class="comment"># 提前终止</span>
-            </div>
+<span class="keyword">if</span> <span class="variable">best_pop</span>[<span class="string">'score'</span>] <span class="operator">&gt;</span> <span class="operator">-</span><span class="variable">exit_condition</span>:
+    <span class="keyword">return</span> <span class="variable">populations</span>  <span class="comment"># 提前终止</span></div>
 
             <div class="info-box">
                 <strong>💡 适应度分数说明：</strong><br>
@@ -552,31 +565,29 @@ best_pop = population[-<span class="number">1</span>]  <span class="comment"># �
             <h3><span class="step-number">4</span>选择父代（基于温度的选择）</h3>
             <p>使用<span class="highlight">玻尔兹曼选择</span>方法，根据适应度计算每个个体被选中的概率。</p>
             
-            <div class="code-block">
-<span class="comment"># 计算选择概率</span>
-scores = np.array([ind[<span class="string">'score'</span>] <span class="keyword">for</span> ind <span class="keyword">in</span> population])
-finite_scores = scores[np.isfinite(scores)]
+            <div class="code-block"><span class="comment"># 计算选择概率</span>
+<span class="variable">scores</span> <span class="operator">=</span> <span class="builtin">np</span>.<span class="function">array</span>([<span class="variable">ind</span>[<span class="string">'score'</span>] <span class="keyword">for</span> <span class="variable">ind</span> <span class="keyword">in</span> <span class="variable">population</span>])
+<span class="variable">finite_scores</span> <span class="operator">=</span> <span class="variable">scores</span>[<span class="builtin">np</span>.<span class="function">isfinite</span>(<span class="variable">scores</span>)]
 
 <span class="comment"># 归一化分数到 [0, 1]</span>
-normalized_scores = (scores - np.min(finite_scores)) / (np.max(finite_scores) - np.min(finite_scores) + <span class="number">1e-6</span>)
+<span class="variable">normalized_scores</span> <span class="operator">=</span> (<span class="variable">scores</span> <span class="operator">-</span> <span class="builtin">np</span>.<span class="function">min</span>(<span class="variable">finite_scores</span>)) <span class="operator">/</span> (<span class="builtin">np</span>.<span class="function">max</span>(<span class="variable">finite_scores</span>) <span class="operator">-</span> <span class="builtin">np</span>.<span class="function">min</span>(<span class="variable">finite_scores</span>) <span class="operator">+</span> <span class="number">1e-6</span>)
 
 <span class="comment"># 应用温度参数的 softmax</span>
-exp_scores = np.exp((normalized_scores - np.max(normalized_scores)) / temperature)
-probs = exp_scores / np.sum(exp_scores)
+<span class="variable">exp_scores</span> <span class="operator">=</span> <span class="builtin">np</span>.<span class="function">exp</span>((<span class="variable">normalized_scores</span> <span class="operator">-</span> <span class="builtin">np</span>.<span class="function">max</span>(<span class="variable">normalized_scores</span>)) <span class="operator">/</span> <span class="variable">temperature</span>)
+<span class="variable">probs</span> <span class="operator">=</span> <span class="variable">exp_scores</span> <span class="operator">/</span> <span class="builtin">np</span>.<span class="function">sum</span>(<span class="variable">exp_scores</span>)
 
 <span class="comment"># 为每个新个体选择两个父代</span>
-selected_population = [
-    np.random.choice(populations[-<span class="number">1</span>], size=<span class="number">2</span>, p=probs, replace=<span class="keyword">True</span>) 
-    <span class="keyword">for</span> _ <span class="keyword">in</span> range(population_size)
+<span class="variable">selected_population</span> <span class="operator">=</span> [
+    <span class="builtin">np</span>.<span class="builtin">random</span>.<span class="function">choice</span>(<span class="variable">populations</span>[<span class="operator">-</span><span class="number">1</span>], size<span class="operator">=</span><span class="number">2</span>, p<span class="operator">=</span><span class="variable">probs</span>, replace<span class="operator">=</span><span class="keyword">True</span>) 
+    <span class="keyword">for</span> <span class="variable">_</span> <span class="keyword">in</span> <span class="builtin">range</span>(<span class="variable">population_size</span>)
 ]
 
 <span class="comment"># 提取父代的公式和参数</span>
-func_lists = [
-    [(pops[<span class="number">0</span>][<span class="string">'ansatz'</span>], pops[<span class="number">0</span>][<span class="string">'params'</span>]), 
-     (pops[<span class="number">1</span>][<span class="string">'ansatz'</span>], pops[<span class="number">1</span>][<span class="string">'params'</span>])] 
-    <span class="keyword">for</span> pops <span class="keyword">in</span> selected_population
-]
-            </div>
+<span class="variable">func_lists</span> <span class="operator">=</span> [
+    [(<span class="variable">pops</span>[<span class="number">0</span>][<span class="string">'ansatz'</span>], <span class="variable">pops</span>[<span class="number">0</span>][<span class="string">'params'</span>]), 
+     (<span class="variable">pops</span>[<span class="number">1</span>][<span class="string">'ansatz'</span>], <span class="variable">pops</span>[<span class="number">1</span>][<span class="string">'params'</span>])] 
+    <span class="keyword">for</span> <span class="variable">pops</span> <span class="keyword">in</span> <span class="variable">selected_population</span>
+]</div>
 
             <div class="formula">
                 选择概率公式:<br><br>
@@ -646,46 +657,44 @@ func_lists = [
             <h3><span class="step-number">5</span>生成后代（基于父代）</h3>
             <p>这是算法最核心的创新：让 LLM 看到父代公式，并生成改进的后代公式。</p>
             
-            <div class="code-block">
-<span class="keyword">async def</span> <span class="function">generate_generation_population</span>():
-    tasks = []
-    semaphore = asyncio.Semaphore(<span class="number">10</span>)
+            <div class="code-block"><span class="keyword">async</span> <span class="keyword">def</span> <span class="function">generate_generation_population</span>():
+    <span class="variable">tasks</span> <span class="operator">=</span> []
+    <span class="variable">semaphore</span> <span class="operator">=</span> <span class="builtin">asyncio</span>.<span class="function">Semaphore</span>(<span class="number">10</span>)
     
-    <span class="keyword">async def</span> <span class="function">create_individual</span>(idx):
-        func_list = func_lists[idx]  <span class="comment"># 两个父代的公式</span>
-        <span class="keyword">async with</span> semaphore:
-            <span class="keyword">for</span> attempt <span class="keyword">in</span> range(<span class="number">5</span>):
+    <span class="keyword">async</span> <span class="keyword">def</span> <span class="function">create_individual</span>(<span class="variable">idx</span>):
+        <span class="variable">func_list</span> <span class="operator">=</span> <span class="variable">func_lists</span>[<span class="variable">idx</span>]  <span class="comment"># 两个父代的公式</span>
+        <span class="keyword">async</span> <span class="keyword">with</span> <span class="variable">semaphore</span>:
+            <span class="keyword">for</span> <span class="variable">attempt</span> <span class="keyword">in</span> <span class="builtin">range</span>(<span class="number">5</span>):
                 <span class="keyword">try</span>:
-                    result = <span class="keyword">await</span> async_single_call(
-                        client, base64_image, x, y, 
-                        model=model,
-                        function_list=func_list,  <span class="comment"># 传入父代公式</span>
-                        system_prompt=system_prompt,
-                        stats=api_stats,
-                        plot_parents=plot_parents,  <span class="comment"># 可选：在图中显示父代曲线</span>
-                        imports=imports
+                    <span class="variable">result</span> <span class="operator">=</span> <span class="keyword">await</span> <span class="function">async_single_call</span>(
+                        <span class="variable">client</span>, <span class="variable">base64_image</span>, <span class="variable">x</span>, <span class="variable">y</span>, 
+                        model<span class="operator">=</span><span class="variable">model</span>,
+                        function_list<span class="operator">=</span><span class="variable">func_list</span>,  <span class="comment"># 传入父代公式</span>
+                        system_prompt<span class="operator">=</span><span class="variable">system_prompt</span>,
+                        stats<span class="operator">=</span><span class="variable">api_stats</span>,
+                        plot_parents<span class="operator">=</span><span class="variable">plot_parents</span>,  <span class="comment"># 可选：在图中显示父代曲线</span>
+                        imports<span class="operator">=</span><span class="variable">imports</span>
                     )
-                    <span class="keyword">if</span> result <span class="keyword">is not</span> None:
-                        <span class="keyword">return</span> result
-                <span class="keyword">except</span> Exception <span class="keyword">as</span> e:
+                    <span class="keyword">if</span> <span class="variable">result</span> <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>:
+                        <span class="keyword">return</span> <span class="variable">result</span>
+                <span class="keyword">except</span> <span class="builtin">Exception</span> <span class="keyword">as</span> <span class="variable">e</span>:
                     <span class="keyword">pass</span>
-            <span class="keyword">return</span> None
+            <span class="keyword">return</span> <span class="keyword">None</span>
     
     <span class="comment"># 创建新一代（如果使用精英主义，则少一个）</span>
-    <span class="keyword">for</span> i <span class="keyword">in</span> range(population_size - (<span class="number">1</span> <span class="keyword">if</span> elite <span class="keyword">else</span> <span class="number">0</span>)):
-        tasks.append(create_individual(i))
+    <span class="keyword">for</span> <span class="variable">i</span> <span class="keyword">in</span> <span class="builtin">range</span>(<span class="variable">population_size</span> <span class="operator">-</span> (<span class="number">1</span> <span class="keyword">if</span> <span class="variable">elite</span> <span class="keyword">else</span> <span class="number">0</span>)):
+        <span class="variable">tasks</span>.<span class="function">append</span>(<span class="function">create_individual</span>(<span class="variable">i</span>))
     
-    results = <span class="keyword">await</span> asyncio.gather(*tasks)
-    <span class="keyword">return</span> [r <span class="keyword">for</span> r <span class="keyword">in</span> results <span class="keyword">if</span> r <span class="keyword">is not</span> None]
+    <span class="variable">results</span> <span class="operator">=</span> <span class="keyword">await</span> <span class="builtin">asyncio</span>.<span class="function">gather</span>(<span class="operator">*</span><span class="variable">tasks</span>)
+    <span class="keyword">return</span> [<span class="variable">r</span> <span class="keyword">for</span> <span class="variable">r</span> <span class="keyword">in</span> <span class="variable">results</span> <span class="keyword">if</span> <span class="variable">r</span> <span class="keyword">is</span> <span class="keyword">not</span> <span class="keyword">None</span>]
 
-gen_population = execute_async_in_loop(generate_generation_population())
+<span class="variable">gen_population</span> <span class="operator">=</span> <span class="function">execute_async_in_loop</span>(<span class="function">generate_generation_population</span>())
 
 <span class="comment"># 如果使用精英主义，保留上一代的最优个体</span>
-<span class="keyword">if</span> elite:
-    population = [best_pop] + gen_population
+<span class="keyword">if</span> <span class="variable">elite</span>:
+    <span class="variable">population</span> <span class="operator">=</span> [<span class="variable">best_pop</span>] <span class="operator">+</span> <span class="variable">gen_population</span>
 <span class="keyword">else</span>:
-    population = gen_population
-            </div>
+    <span class="variable">population</span> <span class="operator">=</span> <span class="variable">gen_population</span></div>
 
             <div class="diagram">
                 <h4>LLM 如何生成后代</h4>
@@ -745,20 +754,18 @@ gen_population = execute_async_in_loop(generate_generation_population())
             <h3><span class="step-number">6</span>精英主义（可选）</h3>
             <p>如果启用 <code>elite=True</code>，算法会保留上一代的最优个体，确保不会退化。</p>
             
-            <div class="code-block">
-population = []
-<span class="keyword">if</span> elite:
+            <div class="code-block"><span class="variable">population</span> <span class="operator">=</span> []
+<span class="keyword">if</span> <span class="variable">elite</span>:
     <span class="comment"># 保留最优个体</span>
-    population.append(best_pop)
+    <span class="variable">population</span>.<span class="function">append</span>(<span class="variable">best_pop</span>)
 
 <span class="comment"># 生成其余的新个体</span>
-gen_population = execute_async_in_loop(generate_generation_population())
+<span class="variable">gen_population</span> <span class="operator">=</span> <span class="function">execute_async_in_loop</span>(<span class="function">generate_generation_population</span>())
 
-<span class="keyword">if</span> elite:
-    population.extend(gen_population)
+<span class="keyword">if</span> <span class="variable">elite</span>:
+    <span class="variable">population</span>.<span class="function">extend</span>(<span class="variable">gen_population</span>)
 <span class="keyword">else</span>:
-    population = gen_population
-            </div>
+    <span class="variable">population</span> <span class="operator">=</span> <span class="variable">gen_population</span></div>
 
             <div class="diagram">
                 <h4>精英主义 vs 非精英主义</h4>
@@ -809,30 +816,28 @@ gen_population = execute_async_in_loop(generate_generation_population())
             <h3><span class="step-number">7</span>迭代与终止</h3>
             <p>重复步骤 4-6，直到满足终止条件或达到最大代数。</p>
             
-            <div class="code-block">
-<span class="keyword">for</span> generation <span class="keyword">in</span> range(num_of_generations - <span class="number">1</span>):
+            <div class="code-block"><span class="keyword">for</span> <span class="variable">generation</span> <span class="keyword">in</span> <span class="builtin">range</span>(<span class="variable">num_of_generations</span> <span class="operator">-</span> <span class="number">1</span>):
     <span class="comment"># 选择父代</span>
-    selected_population = select_parents(population, probs)
+    <span class="variable">selected_population</span> <span class="operator">=</span> <span class="function">select_parents</span>(<span class="variable">population</span>, <span class="variable">probs</span>)
     
     <span class="comment"># 生成后代</span>
-    new_population = generate_offspring(selected_population)
+    <span class="variable">new_population</span> <span class="operator">=</span> <span class="function">generate_offspring</span>(<span class="variable">selected_population</span>)
     
     <span class="comment"># 评估和排序</span>
-    new_population.sort(key=<span class="keyword">lambda</span> x: x[<span class="string">'score'</span>])
-    best_pop = new_population[-<span class="number">1</span>]
-    populations.append(new_population)
+    <span class="variable">new_population</span>.<span class="function">sort</span>(key<span class="operator">=</span><span class="keyword">lambda</span> <span class="variable">x</span>: <span class="variable">x</span>[<span class="string">'score'</span>])
+    <span class="variable">best_pop</span> <span class="operator">=</span> <span class="variable">new_population</span>[<span class="operator">-</span><span class="number">1</span>]
+    <span class="variable">populations</span>.<span class="function">append</span>(<span class="variable">new_population</span>)
     
     <span class="comment"># 检查提前终止条件</span>
-    <span class="keyword">if</span> best_pop[<span class="string">'score'</span>] > -exit_condition:
-        logger.info(<span class="string">f"Exit condition met after generation </span>{generation+<span class="number">1</span>}<span class="string">"</span>)
-        <span class="keyword">return</span> populations
+    <span class="keyword">if</span> <span class="variable">best_pop</span>[<span class="string">'score'</span>] <span class="operator">&gt;</span> <span class="operator">-</span><span class="variable">exit_condition</span>:
+        <span class="builtin">logger</span>.<span class="function">info</span>(<span class="string">f"Exit condition met after generation </span>{<span class="variable">generation</span><span class="operator">+</span><span class="number">1</span>}<span class="string">"</span>)
+        <span class="keyword">return</span> <span class="variable">populations</span>
     
-    population = new_population
+    <span class="variable">population</span> <span class="operator">=</span> <span class="variable">new_population</span>
 
 <span class="comment"># 打印统计信息</span>
-<span class="function">print</span>(<span class="string">f"\n</span>{api_stats}<span class="string">"</span>)
-<span class="keyword">return</span> populations
-            </div>
+<span class="builtin">print</span>(<span class="string">f"\n</span>{<span class="variable">api_stats</span>}<span class="string">"</span>)
+<span class="keyword">return</span> <span class="variable">populations</span></div>
 
             <div class="info-box">
                 <strong>💡 终止条件：</strong>
@@ -865,29 +870,27 @@ gen_population = execute_async_in_loop(generate_generation_population())
             </ul>
         </div>
 
-        <div class="code-block">
-<span class="comment"># 使用示例</span>
-populations = run_genetic(
-    client=client,
-    base64_image=img,
-    x=x_data,
-    y=y_data,
-    population_size=<span class="number">10</span>,
-    num_of_generations=<span class="number">5</span>,
-    temperature=<span class="number">1.0</span>,
-    model=<span class="string">"openai/gpt-4"</span>,
-    exit_condition=<span class="number">1e-5</span>,
-    elite=<span class="keyword">True</span>
+        <div class="code-block"><span class="comment"># 使用示例</span>
+<span class="variable">populations</span> <span class="operator">=</span> <span class="function">run_genetic</span>(
+    client<span class="operator">=</span><span class="variable">client</span>,
+    base64_image<span class="operator">=</span><span class="variable">img</span>,
+    x<span class="operator">=</span><span class="variable">x_data</span>,
+    y<span class="operator">=</span><span class="variable">y_data</span>,
+    population_size<span class="operator">=</span><span class="number">10</span>,
+    num_of_generations<span class="operator">=</span><span class="number">5</span>,
+    temperature<span class="operator">=</span><span class="number">1.0</span>,
+    model<span class="operator">=</span><span class="string">"openai/gpt-4"</span>,
+    exit_condition<span class="operator">=</span><span class="number">1e-5</span>,
+    elite<span class="operator">=</span><span class="keyword">True</span>
 )
 
 <span class="comment"># 获取最优解</span>
-best_generation = populations[-<span class="number">1</span>]  <span class="comment"># 最后一代</span>
-best_individual = best_generation[-<span class="number">1</span>]  <span class="comment"># 最优个体</span>
+<span class="variable">best_generation</span> <span class="operator">=</span> <span class="variable">populations</span>[<span class="operator">-</span><span class="number">1</span>]  <span class="comment"># 最后一代</span>
+<span class="variable">best_individual</span> <span class="operator">=</span> <span class="variable">best_generation</span>[<span class="operator">-</span><span class="number">1</span>]  <span class="comment"># 最优个体</span>
 
-<span class="function">print</span>(<span class="string">f"最优公式: </span>{best_individual[<span class="string">'ansatz'</span>]}<span class="string">"</span>)
-<span class="function">print</span>(<span class="string">f"拟合分数: </span>{best_individual[<span class="string">'score'</span>]}<span class="string">"</span>)
-<span class="function">print</span>(<span class="string">f"参数: </span>{best_individual[<span class="string">'params'</span>]}<span class="string">"</span>)
-        </div>
+<span class="builtin">print</span>(<span class="string">f"最优公式: </span>{<span class="variable">best_individual</span>[<span class="string">'ansatz'</span>]}<span class="string">"</span>)
+<span class="builtin">print</span>(<span class="string">f"拟合分数: </span>{<span class="variable">best_individual</span>[<span class="string">'score'</span>]}<span class="string">"</span>)
+<span class="builtin">print</span>(<span class="string">f"参数: </span>{<span class="variable">best_individual</span>[<span class="string">'params'</span>]}<span class="string">"</span>)</div>
 
         <!-- 完整流程图 -->
         <h2>🎯 完整算法流程总结</h2>
@@ -980,68 +983,66 @@ best_individual = best_generation[-<span class="number">1</span>]  <span class="
 
         <!-- 实际应用示例 -->
         <h2>💻 实际应用示例</h2>
-        <div class="code-block">
-<span class="keyword">import</span> numpy <span class="keyword">as</span> np
-<span class="keyword">from</span> openai <span class="keyword">import</span> OpenAI
-<span class="keyword">from</span> llmlex.llmlex <span class="keyword">import</span> run_genetic
-<span class="keyword">from</span> llmlex.images <span class="keyword">import</span> generate_base64_image
-<span class="keyword">import</span> matplotlib.pyplot <span class="keyword">as</span> plt
+        <div class="code-block"><span class="keyword">import</span> <span class="builtin">numpy</span> <span class="keyword">as</span> <span class="builtin">np</span>
+<span class="keyword">from</span> <span class="builtin">openai</span> <span class="keyword">import</span> <span class="builtin">OpenAI</span>
+<span class="keyword">from</span> <span class="builtin">llmlex</span>.<span class="builtin">llmlex</span> <span class="keyword">import</span> <span class="function">run_genetic</span>
+<span class="keyword">from</span> <span class="builtin">llmlex</span>.<span class="builtin">images</span> <span class="keyword">import</span> <span class="function">generate_base64_image</span>
+<span class="keyword">import</span> <span class="builtin">matplotlib</span>.<span class="builtin">pyplot</span> <span class="keyword">as</span> <span class="builtin">plt</span>
 
 <span class="comment"># 1. 生成测试数据 (例如: y = sin(x) + 0.1 * x²)</span>
-x = np.linspace(<span class="number">0</span>, <span class="number">10</span>, <span class="number">100</span>)
-y = np.sin(x) + <span class="number">0.1</span> * x**<span class="number">2</span> + np.random.normal(<span class="number">0</span>, <span class="number">0.1</span>, len(x))
+<span class="variable">x</span> <span class="operator">=</span> <span class="builtin">np</span>.<span class="function">linspace</span>(<span class="number">0</span>, <span class="number">10</span>, <span class="number">100</span>)
+<span class="variable">y</span> <span class="operator">=</span> <span class="builtin">np</span>.<span class="function">sin</span>(<span class="variable">x</span>) <span class="operator">+</span> <span class="number">0.1</span> <span class="operator">*</span> <span class="variable">x</span><span class="operator">**</span><span class="number">2</span> <span class="operator">+</span> <span class="builtin">np</span>.<span class="builtin">random</span>.<span class="function">normal</span>(<span class="number">0</span>, <span class="number">0.1</span>, <span class="builtin">len</span>(<span class="variable">x</span>))
 
 <span class="comment"># 2. 创建数据可视化</span>
-fig, ax = plt.subplots(figsize=(<span class="number">8</span>, <span class="number">6</span>))
-base64_img = generate_base64_image(fig, ax, x, y)
+<span class="variable">fig</span>, <span class="variable">ax</span> <span class="operator">=</span> <span class="builtin">plt</span>.<span class="function">subplots</span>(figsize<span class="operator">=</span>(<span class="number">8</span>, <span class="number">6</span>))
+<span class="variable">base64_img</span> <span class="operator">=</span> <span class="function">generate_base64_image</span>(<span class="variable">fig</span>, <span class="variable">ax</span>, <span class="variable">x</span>, <span class="variable">y</span>)
 
 <span class="comment"># 3. 初始化 OpenAI 客户端</span>
-client = OpenAI(
-    base_url=<span class="string">"https://openrouter.ai/api/v1"</span>,
-    api_key=<span class="string">"your-api-key-here"</span>
+<span class="variable">client</span> <span class="operator">=</span> <span class="function">OpenAI</span>(
+    base_url<span class="operator">=</span><span class="string">"https://openrouter.ai/api/v1"</span>,
+    api_key<span class="operator">=</span><span class="string">"your-api-key-here"</span>
 )
 
 <span class="comment"># 4. 运行遗传算法</span>
-populations = run_genetic(
-    client=client,
-    base64_image=base64_img,
-    x=x,
-    y=y,
-    population_size=<span class="number">10</span>,         <span class="comment"># 每代 10 个候选公式</span>
-    num_of_generations=<span class="number">5</span>,       <span class="comment"># 进化 5 代</span>
-    temperature=<span class="number">1.0</span>,            <span class="comment"># 平衡的选择策略</span>
-    model=<span class="string">"openai/gpt-4o"</span>,     <span class="comment"># 使用 GPT-4</span>
-    exit_condition=<span class="number">1e-5</span>,        <span class="comment"># 目标精度</span>
-    elite=<span class="keyword">True</span>,                 <span class="comment"># 使用精英主义</span>
-    plot_parents=<span class="keyword">False</span>          <span class="comment"># 不在图中显示父代</span>
+<span class="variable">populations</span> <span class="operator">=</span> <span class="function">run_genetic</span>(
+    client<span class="operator">=</span><span class="variable">client</span>,
+    base64_image<span class="operator">=</span><span class="variable">base64_img</span>,
+    x<span class="operator">=</span><span class="variable">x</span>,
+    y<span class="operator">=</span><span class="variable">y</span>,
+    population_size<span class="operator">=</span><span class="number">10</span>,         <span class="comment"># 每代 10 个候选公式</span>
+    num_of_generations<span class="operator">=</span><span class="number">5</span>,       <span class="comment"># 进化 5 代</span>
+    temperature<span class="operator">=</span><span class="number">1.0</span>,            <span class="comment"># 平衡的选择策略</span>
+    model<span class="operator">=</span><span class="string">"openai/gpt-4o"</span>,     <span class="comment"># 使用 GPT-4</span>
+    exit_condition<span class="operator">=</span><span class="number">1e-5</span>,        <span class="comment"># 目标精度</span>
+    elite<span class="operator">=</span><span class="keyword">True</span>,                 <span class="comment"># 使用精英主义</span>
+    plot_parents<span class="operator">=</span><span class="keyword">False</span>          <span class="comment"># 不在图中显示父代</span>
 )
 
 <span class="comment"># 5. 提取最优解</span>
-best_individual = populations[-<span class="number">1</span>][-<span class="number">1</span>]
+<span class="variable">best_individual</span> <span class="operator">=</span> <span class="variable">populations</span>[<span class="operator">-</span><span class="number">1</span>][<span class="operator">-</span><span class="number">1</span>]
 
-<span class="function">print</span>(<span class="string">"="</span>*<span class="number">50</span>)
-<span class="function">print</span>(<span class="string">"🎉 最优公式找到！"</span>)
-<span class="function">print</span>(<span class="string">"="</span>*<span class="number">50</span>)
-<span class="function">print</span>(<span class="string">f"公式: </span>{best_individual[<span class="string">'ansatz'</span>]}<span class="string">"</span>)
-<span class="function">print</span>(<span class="string">f"分数: </span>{best_individual[<span class="string">'score'</span>]:<span class="string">.6f}"</span>)
-<span class="function">print</span>(<span class="string">f"参数: </span>{best_individual[<span class="string">'params'</span>]}<span class="string">"</span>)
-<span class="function">print</span>(<span class="string">"="</span>*<span class="number">50</span>)
+<span class="builtin">print</span>(<span class="string">"="</span><span class="operator">*</span><span class="number">50</span>)
+<span class="builtin">print</span>(<span class="string">"🎉 最优公式找到！"</span>)
+<span class="builtin">print</span>(<span class="string">"="</span><span class="operator">*</span><span class="number">50</span>)
+<span class="builtin">print</span>(<span class="string">f"公式: </span>{<span class="variable">best_individual</span>[<span class="string">'ansatz'</span>]}<span class="string">"</span>)
+<span class="builtin">print</span>(<span class="string">f"分数: </span>{<span class="variable">best_individual</span>[<span class="string">'score'</span>]:<span class="string">.6f}"</span>)
+<span class="builtin">print</span>(<span class="string">f"参数: </span>{<span class="variable">best_individual</span>[<span class="string">'params'</span>]}<span class="string">"</span>)
+<span class="builtin">print</span>(<span class="string">"="</span><span class="operator">*</span><span class="number">50</span>)
 
 <span class="comment"># 6. 可视化结果</span>
-<span class="keyword">from</span> llmlex.response <span class="keyword">import</span> fun_convert
-curve, _, _ = fun_convert(best_individual[<span class="string">'ansatz'</span>])
-y_pred = curve(x, *best_individual[<span class="string">'params'</span>])
+<span class="keyword">from</span> <span class="builtin">llmlex</span>.<span class="builtin">response</span> <span class="keyword">import</span> <span class="function">fun_convert</span>
+<span class="variable">curve</span>, <span class="variable">_</span>, <span class="variable">_</span> <span class="operator">=</span> <span class="function">fun_convert</span>(<span class="variable">best_individual</span>[<span class="string">'ansatz'</span>])
+<span class="variable">y_pred</span> <span class="operator">=</span> <span class="function">curve</span>(<span class="variable">x</span>, <span class="operator">*</span><span class="variable">best_individual</span>[<span class="string">'params'</span>])
 
-plt.figure(figsize=(<span class="number">10</span>, <span class="number">6</span>))
-plt.plot(x, y, <span class="string">'o'</span>, label=<span class="string">'原始数据'</span>, alpha=<span class="number">0.5</span>)
-plt.plot(x, y_pred, <span class="string">'-'</span>, linewidth=<span class="number">2</span>, label=<span class="string">'拟合曲线'</span>)
-plt.legend()
-plt.title(<span class="string">'遗传算法拟合结果'</span>)
-plt.xlabel(<span class="string">'x'</span>)
-plt.ylabel(<span class="string">'y'</span>)
-plt.grid(<span class="keyword">True</span>, alpha=<span class="number">0.3</span>)
-plt.show()
-        </div>
+<span class="builtin">plt</span>.<span class="function">figure</span>(figsize<span class="operator">=</span>(<span class="number">10</span>, <span class="number">6</span>))
+<span class="builtin">plt</span>.<span class="function">plot</span>(<span class="variable">x</span>, <span class="variable">y</span>, <span class="string">'o'</span>, label<span class="operator">=</span><span class="string">'原始数据'</span>, alpha<span class="operator">=</span><span class="number">0.5</span>)
+<span class="builtin">plt</span>.<span class="function">plot</span>(<span class="variable">x</span>, <span class="variable">y_pred</span>, <span class="string">'-'</span>, linewidth<span class="operator">=</span><span class="number">2</span>, label<span class="operator">=</span><span class="string">'拟合曲线'</span>)
+<span class="builtin">plt</span>.<span class="function">legend</span>()
+<span class="builtin">plt</span>.<span class="function">title</span>(<span class="string">'遗传算法拟合结果'</span>)
+<span class="builtin">plt</span>.<span class="function">xlabel</span>(<span class="string">'x'</span>)
+<span class="builtin">plt</span>.<span class="function">ylabel</span>(<span class="string">'y'</span>)
+<span class="builtin">plt</span>.<span class="function">grid</span>(<span class="keyword">True</span>, alpha<span class="operator">=</span><span class="number">0.3</span>)
+<span class="builtin">plt</span>.<span class="function">show</span>()</div>
 
         <!-- 优势与局限 -->
         <h2>⚖️ 优势与局限性</h2>
