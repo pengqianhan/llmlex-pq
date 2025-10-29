@@ -301,33 +301,30 @@ def get_prompt(function_list=None, imports=None):
 
 def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
     """
-    Generates an initial hybrid automaton JSON from lambda-style definitions.
+    Generates an initial hybrid automaton dictionary from lambda-style definitions.
     This is similar to how get_prompt works for symbolic regression, but for hybrid automata.
     
     Args:
-
-        input_vars (list, optional): List of input variable names, e.g., ["u"]
-        include_comments (bool, optional): When True, append inline comments describing each field.
+        state_data: State variable data array
+        input_data: Input variable data array
+        imports (optional): Import statements (currently unused)
+        include_comments (bool, optional): When True, include inline comments as in dict2json.py
     
     Returns:
-        str: A JSON string representing the automaton. Comments are included when requested.
+        dict: A Python dictionary representing the automaton structure, with optional comments
+              in the same format as shown in dict2json.py
     
     """
-    import json
     num_state_vars = state_data.shape[0]
     num_input_vars = input_data.shape[0]
     var_list = [f"x{i+1}" for i in range(num_state_vars)]
     input_vars = [f"u{i+1}" for i in range(num_input_vars)]
     from prompts.json_comments_ha import automaton_comments, dim_diff_eq
     
-    
     # For initial hybrid automaton, use only one mode, the equations use the lambda functions
-    
     mode_eqs = {
         1: [f"{var_list[i]}[{dim_diff_eq}] = lambda {var_list[j]}, *params: " for i in range(num_state_vars) for j in range(num_state_vars)]
     }
-    # logger.info(f"mode_eqs: {mode_eqs}")
-
     
     # Build the mode list
     mode_list = []
@@ -338,12 +335,13 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
             eq_parts.append(f"{eq}")
         eq_str = ",".join(eq_parts)
         
-        mode_list.append({
+        mode_dict = {
             "id": mode_id,
             "eq": eq_str
-        })
+        }
+        mode_list.append(mode_dict)
     
-    # Build the automaton JSON
+    # Build the automaton dictionary
     automaton = {
         "var": ", ".join(var_list),
         "mode": mode_list
@@ -353,27 +351,22 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
     if input_vars is not None:
         automaton["input"] = ", ".join(input_vars)
     
+    # Build edges
     edges = []
-    for i in range(1,len(mode_list)+1):
+    for i in range(1, len(mode_list) + 1):
         mode_id_from = i
-        mode_id_to = i+1 if i < len(mode_list) else 1
+        mode_id_to = i + 1 if i < len(mode_list) else 1
         edges.append({
             "direction": f"{mode_id_from} -> {mode_id_to}",
             "condition": f"lambda {', '.join(var_list + input_vars)}, *params: f({', '.join(var_list + input_vars)}, params) > 0",
             "reset": {var_list[j]: ["", "x[1]"] for j in range(num_state_vars)}
         })
     automaton["edge"] = edges
-    # logger.info(f"edges: {edges}")
     
     config = {
         "dt": 0.001,
         "total_time": 10.0,
         "dim": dim_diff_eq,
-        # "window_size": 10,
-        # "clustering_method": "fit",
-        # "minus": False,
-        # "need_bias": True,
-        # "kernel": "linear",
         "other_items": ""
     }
 
@@ -381,61 +374,49 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
         "automaton": automaton,
         "config": config
     }
-    # add comments to the result if enabled
-    result_json = json.dumps(result, indent=2)
-    if not include_comments:
-        logger.debug(f"Generated HA JSON without comments:\n{result_json}")
-        return result_json
-
-    line_comments = {
-        '"automaton": {': "// automaton",
-        '"var": ': automaton_comments["var"],
-        '"mode": [': "// mode list",
-        '"id": ': automaton_comments["mode"][0]["id"],
-        '"eq": ': automaton_comments["mode"][0]["eq"],
-        '"direction": ': automaton_comments["edge"][0]["direction"],
-        '"condition": ': automaton_comments["edge"][0]["condition"],
-        '"reset": ': automaton_comments["edge"][0]["reset"],
-        '"config": {': "// configuration parameters",
-        '"dt": ': automaton_comments["config"]["dt"],
-        '"total_time": ': automaton_comments["config"]["total_time"],
-        '"dim": ': automaton_comments["config"]["dim"],
-        # '"window_size": ': automaton_comments["config"]["window_size"],
-        # '"clustering_method": ': automaton_comments["config"]["clustering_method"],
-        # '"minus": ': automaton_comments["config"]["minus"],
-        # '"need_bias": ': automaton_comments["config"]["need_bias"],
-        # '"kernel": ': automaton_comments["config"]["kernel"],
-        '"other_items": ': automaton_comments["config"]["other_items"],
-    }
-
-    if "input" in automaton:
-        line_comments['"input": '] = automaton_comments["input"]
-
-    annotated_lines = []
-    for line in result_json.splitlines():
-        stripped = line.lstrip()
-        indent = line[:len(line) - len(stripped)]
-        comment = None
-        for key, comment_text in line_comments.items():
-            if stripped.startswith(key):
-                comment = comment_text
-                break
-
-        if comment is None:
-            annotated_lines.append(line)
-            continue
-
-        if "\n" not in comment:
-            annotated_lines.append(f"{line} {comment.strip()}")
-        else:
-            annotated_lines.append(line)
-            for comment_line in comment.split("\n"):
-                if comment_line.strip():
-                    annotated_lines.append(f"{indent}{comment_line.strip()}")
-
-    result_with_comments = "\n".join(annotated_lines)
     
-    logger.debug(f"Generated HA JSON with comments:\n{result_with_comments}")
+    if not include_comments:
+        logger.debug(f"Generated HA dict without comments: {result}")
+        return result
+    
+    # When comments are requested, structure the dict like in dict2json.py
+    # Build result with inline comments as shown in the reference
+    result_with_comments = {
+        "automaton": {  # automaton
+            "var": ", ".join(var_list),  # variables list, separated by ','
+            "mode": [  # mode list
+                {
+                    "id": mode["id"],  # mode id
+                    "eq": mode["eq"]
+                    # k-th order differential equation in the mode, separated by ','
+                    # cannot contain variables that are not defined in var, x[k] represents the k-th derivative of x
+                    # the left side of the equal sign is the highest order derivative, the right side is the expression, does not support implicit functions
+                    # must provide ode for each variable
+                } for mode in mode_list
+            ],
+        },
+        "config": {  # configuration parameters
+            "dt": 0.001,  # discrete time step (default 0.001)
+            "total_time": 10.0,  # total sampling time (default 10.0)
+            "dim": dim_diff_eq,  # dimension of differential equation (default 1)
+            "other_items": ""  # additional nonlinear or cross terms (default empty string)
+        }
+    }
+    
+    # Add input field if present
+    if "input" in automaton:
+        result_with_comments["automaton"]["input"] = ", ".join(input_vars)  # input variables list, separated by ','
+    
+    # Add edges field
+    result_with_comments["automaton"]["edge"] = [
+        {
+            "direction": edge["direction"],  # edge from mode u to mode v, represented as 'u -> v'
+            "condition": edge["condition"],  # transition condition, cannot contain variables that are not defined in var
+            "reset": edge["reset"]  # reset mapping for each variable, each variable has a list of reset values
+        } for edge in edges
+    ]
+    
+    logger.debug(f"Generated HA dict with comments: {result_with_comments}")
     return result_with_comments
 
 
