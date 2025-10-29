@@ -471,6 +471,8 @@ def call_model(client, model, image, prompt, system_prompt=None):
     image_size = len(image) if image else 0
     logger.debug(f"Image size: {image_size} characters (base64)")
     logger.debug(f"Prompt length: {len(prompt)} characters")
+    logger.info(f"System prompt:\n {system_prompt}")
+    logger.info(f"Prompt:\n {prompt}")
     
     try:
         # Create and send the API request
@@ -533,9 +535,13 @@ def call_model_ha(client, model, image, prompt, system_prompt=None):
         #system_prompt = ("Give an improved ansatz to the list for the image. Follow on from the users text with no explaining."
         #                 "Params can be any length. If there's some noise in the data, give preference to simpler functions"
         # THIS IS THE SYSTEM PROMPT FOR THE SYNC MODEL - see LLMLEx.py for the async version
-        system_prompt = ("You are a hybrid automaton expert. Analyze the data in the image and provide an improved mathematical skeleton of the hybrid automaton. "
+        system_prompt_sr = ("You are a symbolic regression expert. Analyze the data in the image and provide an improved mathematical ansatz. "
+                         "Respond with ONLY the ansatz formula, without any explanation or commentary. Ensure it is in valid python. You may use numpy functions. "
                          "params is a list of parameters that can be of any length or complexity. "
-                         "Respond with ONLY the JSON object, without any explanation or commentary." "\n")
+                        )
+        system_prompt = ("You are a hybrid automaton expert. Analyze the data in the image and provide an improved version of the hybrid automaton. "
+                         "Respond with ONLY the hybrid automaton object, without any explanation or commentary. Ensure it is in valid python. You may use numpy functions."
+                         "params is a list of parameters that can be of any length or complexity. ")
                          #"Since the data may contain noise, prioritize simpler, more elegant functions that capture the underlying pattern rather than fitting every point. "
         # system_prompt += JSON_comments
         logger.debug("Using default system prompt: \n" + system_prompt)

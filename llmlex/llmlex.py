@@ -145,7 +145,6 @@ def single_call(client, img, x, y, model="openai/gpt-5-nano-2025-08-07-mini", fu
             # Generate the prompt
             logger.debug("Generating prompt")
             prompt = get_prompt(function_list, imports=imports)
-            logger.info(f"Prompt:\n {prompt}")
             
             # Make API call
             try:
@@ -166,6 +165,7 @@ def single_call(client, img, x, y, model="openai/gpt-5-nano-2025-08-07-mini", fu
             try:
                 logger.debug("Extracting ansatz from response")
                 logger.info(f"Response: {response}")
+                logger.info(f'response.choices[0].message.content: {response.choices[0].message.content}')
                 ansatz, num_params = extract_ansatz(response)
                 logger.info(f"Extracted ansatz: {ansatz[:50]}{'...' if len(ansatz) > 50 else ''} with {num_params} parameters")
                 stats.stage_success("ansatz_extraction")
@@ -290,12 +290,12 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
             logger.debug("Generating prompt")
             prompt = get_prompt_ha(state_data, input_data, imports=imports)
             # save the prompt to a json file
-            prompt_path = Path('prompts/prompt_ha.json')
+            prompt_path = Path('prompts/prompt_ha.py')
             if isinstance(prompt, str):
                 prompt_path.write_text(prompt)
-            else:
-                with prompt_path.open('w') as f:
-                    json.dump(prompt, f, indent=2)
+            # else:
+            #     with prompt_path.open('w') as f:
+            #         json.dump(prompt, f, indent=2)
             # Make API call
             try:
                 # Only make a new API call on the first attempt or if we need to retry with a new call

@@ -71,6 +71,9 @@ def generate_base64_image(fig, ax, x, y):
         logger.debug("Saving figure to buffer")
         buffer = io.BytesIO()
         fig.savefig(buffer, format='png', dpi=100)
+        # save figure to file
+        fig.savefig('plot.png')
+
         buffer_size = buffer.tell()
         logger.debug(f"Buffer size: {buffer_size} bytes")
         
