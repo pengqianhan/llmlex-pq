@@ -303,8 +303,8 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
                     logger.info(f"Calling model {model}")
                     logger.debug(f"system_prompt: {system_prompt}")# None
                     logger.debug(f"prompt: {prompt}")
-                    # response = call_model_ha(client, model, img, prompt, system_prompt=system_prompt)
-                    response = call_model_ha_json(client, model, img, prompt, system_prompt=system_prompt)
+                    response = call_model_ha(client, model, img, prompt, system_prompt=system_prompt)
+                    # response = call_model_ha_json(client, model, img, prompt, system_prompt=system_prompt)
                     logger.info(f"Response: \n {response}")
                 stats.stage_success("api_call")
             except Exception as e:

@@ -537,39 +537,6 @@ def call_model_ha(client, model, image, prompt, system_prompt=None):
                          "params is a list of parameters that can be of any length or complexity. "
                          "Respond with ONLY the JSON object, without any explanation or commentary." "\n")
                          #"Since the data may contain noise, prioritize simpler, more elegant functions that capture the underlying pattern rather than fitting every point. "
-        JSON_comments = """
-        ```json
-        {
-            "automaton": { // automaton
-                "var": "x1, x2, ... , xn", // variables list, separated by ','
-                "input": "u1, u2, ... , un", // input variables list, separated by ','
-                "mode": [ // mode list
-                    {
-                        "id": 1, // mode id
-                        "eq": ""
-                        // ode of each variable in the mode, separated by ','
-                        // cannot contain variables that are not defined in var, x[k] represents the k-th derivative of x
-                        // the left side of the equal sign is the highest order derivative, the right side is the expression, does not support implicit functions
-                        // must provide ode for each variable
-                    }
-                    ...
-                ],
-                "edge": [
-                    {
-                        "direction": "", // edge from mode u to mode v, represented as 'u -> v'
-                        "condition": "", // transition condition, cannot contain variables that are not defined in var
-                        "reset": { // reset mapping for each variable, each variable has a list of reset values
-                            "x1": ["", ],
-                            "x2": ["", ],
-                            ...
-                        }
-                    }
-                    ...
-                ]
-            }
-        }
-        ```
-        """
         # system_prompt += JSON_comments
         logger.debug("Using default system prompt: \n" + system_prompt)
     # Track image size for debugging purposes
