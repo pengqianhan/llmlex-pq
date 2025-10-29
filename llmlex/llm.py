@@ -323,7 +323,7 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
     
     # For initial hybrid automaton, use only one mode, the equations use the lambda functions
     mode_eqs = {
-        1: [f"{var_list[i]}[{dim_diff_eq}] = lambda {var_list[j]}, *params: " for i in range(num_state_vars) for j in range(num_state_vars)]
+        1: [f"{var_list[i]}[{dim_diff_eq}] = lambda {var_list[j]}, *params: params[0] " for i in range(num_state_vars) for j in range(num_state_vars)]
     }
     
     # Build the mode list
