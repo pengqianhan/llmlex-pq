@@ -318,37 +318,8 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
     num_input_vars = input_data.shape[0]
     var_list = [f"x{i+1}" for i in range(num_state_vars)]
     input_vars = [f"u{i+1}" for i in range(num_input_vars)]
-    # logger.info(f"var_list: {var_list}")
-    # logger.info(f"input_vars: {input_vars}")
-    dim_diff_eq = 'k'
-    automaton_comments = {
-        "var": "// variables list, separated by ','",
-        "input": "// input variables list, separated by ','",
-        "mode": [
-            {
-                "id": "// mode id",
-                "eq": f"// {dim_diff_eq}-th order differential equation in the mode, separated by ','\n// cannot contain variables that are not defined in var, x[k] represents the k-th derivative of x\n// the left side of the equal sign is the highest order derivative, the right side is the expression, does not support implicit functions\n// must provide ode for each variable"
-            }
-        ],
-        "edge": [
-            {
-                "direction": "// edge from mode u to mode v, represented as 'u -> v'",
-                "condition": "// transition condition, cannot contain variables that are not defined in var",
-                "reset": "// reset mapping for each variable, each variable has a list of reset values"
-            }
-        ],
-        "config": {
-            "dt": "// discrete time step (default 0.001)",
-            "total_time": "// total sampling time (default 10.0)",
-            "dim": "// dimension of differential equation (default 1)",
-            # "window_size": "// sliding window size (default 10)",
-            # "clustering_method": "// clustering method, 'fit' or 'dis' (default 'fit')",
-            # "minus": "// whether to minimize order (default false)",
-            # "need_bias": "// whether to include constant term (default true)",
-            # "kernel": "// SVM kernel function (default 'linear')",
-            "other_items": "// additional nonlinear or cross terms (default empty string)"
-        }
-    }
+    from prompts.json_comments_ha import automaton_comments, dim_diff_eq
+    
     
     # For initial hybrid automaton, use only one mode, the equations use the lambda functions
     
