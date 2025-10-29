@@ -319,7 +319,7 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
     num_input_vars = input_data.shape[0]
     var_list = [f"x{i+1}" for i in range(num_state_vars)]
     input_vars = [f"u{i+1}" for i in range(num_input_vars)]
-    from prompts.json_comments_ha import automaton_comments, dim_diff_eq
+    dim_diff_eq = 'k'
     
     # For initial hybrid automaton, use only one mode, the equations use the lambda functions
     mode_eqs = {

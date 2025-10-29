@@ -289,7 +289,7 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
             # Generate the prompt
             logger.debug("Generating prompt")
             prompt = get_prompt_ha(state_data, input_data, imports=imports)
-            # save the prompt to a json file
+            # save the prompt to python file
             prompt_path = Path('prompts/prompt_ha.py')
             if isinstance(prompt, str):
                 prompt_path.write_text(prompt)
