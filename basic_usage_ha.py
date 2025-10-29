@@ -15,14 +15,6 @@ client = openai.OpenAI(
 # model_name = "models/gemini-flash-lite-latest"
 model_name = "models/gemini-flash-latest"
 # model_name = "models/gemini-2.5-pro"
-# Generate data
-# x = np.linspace(-1, 1, 50)
-# y = np.sin(np.pi * x) + 0.1 * np.random.randn(50)
-
-# # Generate image of data (or use your own)
-# fig, ax = plt.subplots()
-# ax.scatter(x, y)
-# base64_img = llmlex.images.generate_base64_image(fig, ax, x, y)
 
 npz_file = np.load('data_duffing/test_data0.npz')
 state_data = npz_file['state']
