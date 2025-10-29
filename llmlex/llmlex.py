@@ -293,10 +293,6 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
             prompt_path = Path('prompts/prompt_ha.py')
             if isinstance(prompt, str):
                 prompt_path.write_text(prompt)
-            # else:
-            #     with prompt_path.open('w') as f:
-            #         json.dump(prompt, f, indent=2)
-            # Make API call
             try:
                 # Only make a new API call on the first attempt or if we need to retry with a new call
                 if retry_count == 1 or response is None:

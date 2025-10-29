@@ -16,14 +16,14 @@ automaton_comments = {
         }
     ],
     "config": {
-        "dt": "// discrete time step (default 0.001)",
-        "total_time": "// total sampling time (default 10.0)",
-        "dim": "// dimension of differential equation (default 1)",
+        "dt": "// discrete time step",
+        "total_time": "// total sampling time",
+        "dim": "// dimension of differential equation",
         # "window_size": "// sliding window size (default 10)",
         # "clustering_method": "// clustering method, 'fit' or 'dis' (default 'fit')",
         # "minus": "// whether to minimize order (default false)",
         # "need_bias": "// whether to include constant term (default true)",
         # "kernel": "// SVM kernel function (default 'linear')",
-        "other_items": "// additional nonlinear or cross terms (default empty string)"
+        "other_items": "// additional nonlinear or cross terms"
     }
 }
