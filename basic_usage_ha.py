@@ -28,7 +28,7 @@ system_prompt = open('prompts/system_prompt.md', 'r').read()
 
 # Run symbolic regression
 # result = llmlex.single_call(client, base64_img, x, y, model=model_name)
-result_ha = llmlex.single_call_ha(client, base64_img_ha, state_data, input_data, model=model_name, system_prompt=system_prompt)
+result_ha = llmlex.single_call_ha(client, base64_img_ha, state_data, input_data, model=model_name)
 
 # View results
 print(f"Best function: {result_ha['ansatz']}")
