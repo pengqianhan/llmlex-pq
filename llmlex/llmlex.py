@@ -299,6 +299,10 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
                     response = call_model_ha(client, model, img, prompt, system_prompt=system_prompt)
                     # response = call_model_ha_json(client, model, img, prompt, system_prompt=system_prompt)
                     logger.info(f"Response: \n {response}")
+                    # save the response to a python file
+                    with open('response.py', 'w') as f:
+                        f.write(response)
+                    logger.info(f"Response saved to response.py")
                 stats.stage_success("api_call")
             except Exception as e:
                 stats.stage_failure("api_call", e)

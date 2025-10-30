@@ -540,6 +540,7 @@ def call_model_ha(client, model, image, prompt, system_prompt=None):
         logger.debug("Creating chat completion request")
         response = client.chat.completions.create(
             model=model,
+            reasoning_effort="high",
             messages=[
                 { "role": "system", 
                  "content": system_prompt},

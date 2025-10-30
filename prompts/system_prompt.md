@@ -1,5 +1,2 @@
-"You are a hybrid automaton expert. Analyze the data in the supplied image and describe the system using the HybridAutomatonJSON schema. 
-
-*params is a list of parameters that can be of any length or complexity
-
-Respond ONLY with a JSON object that matches the schema:\n"
+"You are a hybrid automaton expert. Analyze the data in the image and provide an improved version of the hybrid automaton. "
+"Respond with ONLY the hybrid automaton python dictionary, without any explanation or commentary. Ensure it is in valid python. You may use numpy functions."
