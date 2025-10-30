@@ -8,34 +8,16 @@ import json
 from CreatData import plot_fun
 
 
-def ha_evaluation(json_path: str, data_path: str, dT: float, times: float):
+def ha_evaluation(data: dict, data_path: str, dT: float, times: float):
     r"""
-    :param json_path: File path of automata.
+    :param data: Dictionary containing the hybrid automaton.
     :param data_path: Data storage path.
     :param dT: Discrete time.
     :param times: Total sampling time.
     """
 
 
-    data = {
-    "automaton": {
-        "var": "x1",
-        "input": "u1",
-        "mode": [
-            {
-                "id": 1,
-                "eq": "x1[2] = -0.5 * x1[1] - 5.0 * x1[0] - 0.5 * x1[0]**3 + u1"
-            }
-        ],
-        "edge": []
-    },
-    "config": {
-        "dt": 0.001,
-        "total_time": 10.0,
-        "dim": 2,
-        "other_items": ""
-    }
-}
+    
     # Use dictionary directly
 
     sys = HybridAutomata.from_json(data['automaton'])
@@ -97,7 +79,6 @@ def ha_evaluation(json_path: str, data_path: str, dT: float, times: float):
         input_data = np.transpose(np.array(input_data))
         mode_data = np.array(mode_data)
         # plot data
-        system_title = os.path.splitext(os.path.basename(json_path))[0]
         system_title = 'duffing'
         figure_path = os.path.join(data_path, f"sample_{state_id}.png")
         plot_fun(state_data, input_data, dT, system_name=system_title,
@@ -106,4 +87,23 @@ def ha_evaluation(json_path: str, data_path: str, dT: float, times: float):
 
 
 if __name__ == "__main__":
-    ha_evaluation('automata/non_linear/duffing_simulation.json', 'data_duffing_evaluation', 0.001, 10)
+    data = {
+    "automaton": {
+        "var": "x1",
+        "input": "u1",
+        "mode": [
+            {
+                "id": 1,
+                "eq": "x1[2] = -0.5 * x1[1] - 5.0 * x1[0] - 0.5 * x1[0]**3 + u1"
+            }
+        ],
+        "edge": []
+    },
+    "config": {
+        "dt": 0.001,
+        "total_time": 10.0,
+        "dim": 2,
+        "other_items": ""
+    }
+}
+    ha_evaluation(data, 'data_duffing_evaluation', 0.001, 10)

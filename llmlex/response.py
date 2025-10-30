@@ -6,6 +6,20 @@ import logging
 # Get module logger
 logger = logging.getLogger("LLMLEx.response")
 
+def extract_ha(response):
+    """
+    Extracts the hybrid automaton from the given response.
+    Args:
+        response (Union[str, object]): The response string or object from the llm call.
+    Returns:
+        dict: A dictionary containing the hybrid automaton.
+    """
+    logger.debug("Extracting hybrid automaton from model response")
+    ha_dict = response.choices[0].message.content
+
+    return ha_dict
+
+
 def extract_ansatz(response):
     """
     Extracts the ansatz and the largest parameter index from the given response.

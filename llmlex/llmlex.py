@@ -4,7 +4,7 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 from llmlex.images import generate_base64_image, generate_base64_image_with_parents
 from llmlex.llm import get_prompt, get_prompt_ha, call_model,call_model_ha, call_model_ha_json, async_rate_limit_api_call, clear_rate_limit_lock, check_key_usage, async_call_model
-from llmlex.response import extract_ansatz, fun_convert
+from llmlex.response import extract_ansatz, fun_convert, extract_ha
 import logging
 import llmlex.fit as fit
 import asyncio
@@ -297,12 +297,7 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
                     logger.debug(f"prompt: {prompt}")
                     response = call_model_ha(client, model, img, prompt, system_prompt=system_prompt)
                     # response = call_model_ha_json(client, model, img, prompt, system_prompt=system_prompt)
-                    logger.info(f"Response: \n {response}")
-                    save_response = response.choices[0].message.content
-                    # save the response to a python file
-                    with open('response.py', 'w') as f:
-                        f.write(save_response)
-                    logger.info(f"Response saved to response.py")
+
                 stats.stage_success("api_call")
             except Exception as e:
                 stats.stage_failure("api_call", e)
@@ -314,29 +309,17 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
             try:
                 logger.debug("Extracting ansatz from response")
                 logger.info(f"Response: {response}")
-                ansatz, num_params = extract_ansatz(response)
-                logger.info(f"Extracted ansatz: {ansatz[:50]}{'...' if len(ansatz) > 50 else ''} with {num_params} parameters")
-                stats.stage_success("ansatz_extraction")
+                ha_dict = extract_ha(response)
+                
             except Exception as e:
-                stats.stage_failure("ansatz_extraction", e)
+                stats.stage_failure("ha_extraction", e)
                 last_error = e
-                logger.debug(f"Ansatz extraction failed: {e}")
+                logger.debug(f"HA extraction failed: {e}")
                 # For these errors, we might want to try a new API call
                 response = None
                 continue
             
-            # Convert ansatz to function
-            try:
-                logger.debug("Converting ansatz to function")
-                curve, num_params, lambda_str = fun_convert(ansatz)
-                stats.stage_success("function_conversion")
-            except Exception as e:
-                stats.stage_failure("function_conversion", e)
-                last_error = e
-                logger.debug(f"Function conversion failed: {e}")
-                # For these errors, we might want to try a new API call
-                response = None
-                continue
+            
             
             # Fit curve to data
             try:
@@ -389,115 +372,6 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
     else:
         logger.error("Unknown error in single_call")
         raise RuntimeError("Unknown error in single_call")
-
-# @async_rate_limit_api_call
-# async def async_call_model(client, model, image, prompt, system_prompt=None):
-#     """
-#     Asynchronous version of call_model.
-#     This function makes a direct async call to the LLM API with rate limiting.
-#     """
-#     logger.debug(f"Async calling model {model}")
-    
-#     # Set default system prompt if not provided
-#     if system_prompt is None:
-#         system_prompt = ("You are a symbolic regression expert. Analyze the data in the image and provide an improved mathematical ansatz (formula template). "
-#                          "Respond with ONLY the ansatz formula, without any explanation or commentary. Ensure it is in valid python. You may use numpy functions. "
-#                          "params is a list of parameters that can be of any length or complexity. Index into it with params[0], params[1], etc. "
-#                          "Since the data contains noise, prioritize simpler, more elegant functions that capture the underlying pattern rather than fitting every point. ")
-#         logger.debug("Using default system prompt: \n" + system_prompt)
-    
-#     # Track image size for debugging purposes
-#     image_size = len(image) if image else 0
-#     logger.debug(f"Image size: {image_size} characters (base64)")
-#     logger.debug(f"Prompt length: {len(prompt)} characters")
-    
-#     try:
-#         # Create and send the API request asynchronously or synchronously depending on client capabilities
-#         logger.debug("Creating async chat completion request")
-        
-#         # Check if the client supports async operations directly
-#         if hasattr(client.chat.completions, 'acreate'):
-#             # Use the async API if available
-#             response = await client.chat.completions.acreate(
-#                 model=model,
-#                 messages=[
-#                     { "role": "system", 
-#                      "content": system_prompt},
-#                     {
-#                         "role": "user",
-#                         "content": [
-#                             {
-#                                 "type": "image_url",
-#                                 "image_url": {"url": f"data:image/png;base64,{image}"},
-#                             },
-#                             {
-#                                 "type": "text",
-#                                 "text": prompt,
-#                             },
-#                         ],
-#                     }
-#                 ],
-#                 max_tokens=4096,
-#             )
-#         else:
-#             # If no async API is available, use the sync API in a thread pool
-#             import concurrent.futures
-#             loop = asyncio.get_event_loop()
-#             with concurrent.futures.ThreadPoolExecutor() as pool:
-#                 response = await loop.run_in_executor(
-#                     pool,
-#                     lambda: client.chat.completions.create(
-#                         model=model,
-#                         messages=[
-#                             { "role": "system", 
-#                              "content": system_prompt},
-#                             {
-#                                 "role": "user",
-#                                 "content": [
-#                                     {
-#                                         "type": "image_url",
-#                                         "image_url": {"url": f"data:image/png;base64,{image}"},
-#                                     },
-#                                     {
-#                                         "type": "text",
-#                                         "text": prompt,
-#                                     },
-#                                 ],
-#                             }
-#                         ],
-#                         max_tokens=4096,
-#                     )
-#                 )
-        
-#         # Log response info
-#         try:
-#             if hasattr(response, 'usage'):
-#                 token_usage = response.usage.total_tokens
-#                 logger.debug(f"Async model response received. Total tokens: {token_usage}")
-            
-#             if hasattr(response, 'choices') and len(response.choices) > 0 and hasattr(response.choices[0], 'finish_reason'):
-#                 logger.debug(f"Response finish reason: {response.choices[0].finish_reason}")
-#         except Exception as e:
-#             logger.debug(f"Could not access token usage information: {e}")
-        
-#         # Process response if needed
-#         if hasattr(response, 'choices') and len(response.choices) > 0:
-#             # Standard OpenAI API response format
-#             if hasattr(response.choices[0], 'message') and hasattr(response.choices[0].message, 'content'):
-#                 # Return just the content for simpler processing later
-#                 return response.choices[0].message.content
-#             elif hasattr(response.choices[0], 'text'):
-#                 return response.choices[0].text
-#             # Fall back to returning the full response object
-        
-#         return response
-        
-#     except Exception as e:
-#         # Log and re-raise any exceptions
-# #         logger.error(f"Error calling model {model} asynchronously: {e}", exc_info=True)
-# #         raise
-
-#        raise
 
 async def async_single_call(client, img, x, y, model="openai/gpt-5-nano-2025-08-07-mini", function_list=None, system_prompt=None, max_retries=3, stats=None, plot_parents=False, imports=None):
     """
