@@ -321,30 +321,24 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
             
             
             
-            # Fit curve to data
+            # plot and evaluate the ha_dict
             try:
-                logger.debug("Fitting curve to data")
-                params, score = fit.fit_curve(x, y, curve, num_params, allow_using_jax=True, curve_str=lambda_str, stats=stats)
-                logger.info(f"Fit result: score={-score}, params={params}")
-                stats.stage_success("curve_fitting")
+                logger.debug("Plotting and evaluating the ha_dict")
+                from Dainarx_code.HA_evaluation import ha_evaluation
+                ha_evaluation(ha_dict, 'data_duffing_evaluation', 0.001, 10)
+                stats.stage_success("ha_evaluation")
             except Exception as e:
-                stats.stage_failure("curve_fitting", e)
+                stats.stage_failure("ha_evaluation", e)
                 last_error = e
-                logger.debug(f"Curve fitting in single_call failed: {e}")
-                # For these errors, we might want to try a new API call
-                response = None
+                logger.debug(f"HA evaluation failed: {e}")
                 continue
 
             # If we get here, everything worked
             stats.add_success()
             result = {
-                "params": params,
-                "score": -score,
-                "ansatz": ansatz,
-                "Num_params": num_params,
+                "ha_dict": ha_dict,
                 "response": response,
                 "prompt": prompt,
-                "function_list": function_list,
                 "stats": None if local_stats else stats  # Only include stats if we created them locally
             }
             logger.debug("single_call completed successfully")
