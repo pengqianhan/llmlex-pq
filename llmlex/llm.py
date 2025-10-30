@@ -533,8 +533,7 @@ def call_model_ha(client, model, image, prompt, system_prompt=None):
                          "params is a list of parameters that can be of any length or complexity. "
                         )
         system_prompt = ("You are a hybrid automaton expert. Analyze the data in the image and provide an improved version of the hybrid automaton. "
-                         "Respond with ONLY the hybrid automaton object, without any explanation or commentary. Ensure it is in valid python. You may use numpy functions."
-                         "params is a list of parameters that can be of any length or complexity. ")
+                         "Respond with ONLY the hybrid automaton object, without any explanation or commentary. Ensure it is in valid python. You may use numpy functions.")
                          #"Since the data may contain noise, prioritize simpler, more elegant functions that capture the underlying pattern rather than fitting every point. "
         # system_prompt += JSON_comments
         logger.debug("Using default system prompt: \n" + system_prompt)
