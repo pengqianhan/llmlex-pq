@@ -9,9 +9,11 @@ PROMPT_HA_v0 = {
                 "id": 1,  # mode id
                 "eq": "x1[1] = x1[0] + u1"
                 # k-th order differential equation in the mode, separated by ','
-                # cannot contain variables that are not defined in var, x[k] represents the k-th derivative of x
-                # the left side of the equal sign is the highest order derivative, the right side is the expression, does not support implicit functions
-                # must provide ode for each variable
+                # cannot contain variables that are not defined in var, x[0] represents the original value of x, and x[k] is the k-th derivative
+                # The left side of the equal sign is the highest order derivative 
+                # The right side is the expression, does not support implicit functions
+                # Any variable 'x' MUST be in the format x[k]
+                # MUST provide ode for each variable
             }
         ],
 
