@@ -525,13 +525,6 @@ def call_model_ha(client, model, image, prompt, system_prompt=None):
     
     # Set default system prompt if not provided
     if system_prompt is None:
-        #system_prompt = ("Give an improved ansatz to the list for the image. Follow on from the users text with no explaining."
-        #                 "Params can be any length. If there's some noise in the data, give preference to simpler functions"
-        # THIS IS THE SYSTEM PROMPT FOR THE SYNC MODEL - see LLMLEx.py for the async version
-        system_prompt_sr = ("You are a symbolic regression expert. Analyze the data in the image and provide an improved mathematical ansatz. "
-                         "Respond with ONLY the ansatz formula, without any explanation or commentary. Ensure it is in valid python. You may use numpy functions. "
-                         "params is a list of parameters that can be of any length or complexity. "
-                        )
         system_prompt = ("You are a hybrid automaton expert. Analyze the data in the image and provide an improved version of the hybrid automaton. "
                          "Respond with ONLY the hybrid automaton object, without any explanation or commentary. Ensure it is in valid python. You may use numpy functions.")
                          #"Since the data may contain noise, prioritize simpler, more elegant functions that capture the underlying pattern rather than fitting every point. "
