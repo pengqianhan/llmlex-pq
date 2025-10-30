@@ -104,4 +104,4 @@ def ha_evaluation(json_path: str, data_path: str, dT: float, times: float):
 
 
 if __name__ == "__main__":
-    ha_evaluation('automata/non_linear/duffing_simulation.json', 'data_duffing_simulation', 0.001, 10)
+    ha_evaluation('automata/non_linear/duffing_simulation.json', 'data_duffing_evaluation', 0.001, 10)
