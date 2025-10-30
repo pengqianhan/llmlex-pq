@@ -1,9 +1,10 @@
 import numpy as np
 import os
 from math import *
+import src.DE as DE
 import matplotlib.pyplot as plt
 from typing import Optional
-from Dainarx_code.src.HybridAutomata import HybridAutomata
+from src.HybridAutomata import HybridAutomata
 import json
 
 
@@ -14,7 +15,7 @@ def plot_fun(state_data: np.ndarray,
              sample_index: Optional[int] = None,
              save_path: Optional[str] = None,
              show: bool = True) -> None:
-    """Plot a 2D trajectory (if available) and the time series for states/inputs."""
+    """Plot the time series for states/inputs."""
 
     if state_data.ndim != 2:
         raise ValueError("state_data must be a 2D array with shape (num_states, num_steps)")
@@ -36,28 +37,16 @@ def plot_fun(state_data: np.ndarray,
         raise ValueError("state_data must contain at least one time step")
 
     time = np.arange(num_steps) * dt
-    has_traj = num_states >= 2
-    nrows = 2 if has_traj else 1
 
-    figsize = (12, 8) if has_traj else (12, 5)
-    fig, axes = plt.subplots(nrows, 1, figsize=figsize, constrained_layout=True)
-
-    if has_traj:
-        ax_traj, ax_ts = axes
-        ax_traj.plot(state_data[0], state_data[1], color='tab:blue', linewidth=2)
-        ax_traj.scatter(state_data[0, 0], state_data[1, 0], color='green', s=80, zorder=3, label='Start')
-        ax_traj.scatter(state_data[0, -1], state_data[1, -1], color='red', s=80, marker='s', zorder=3, label='End')
-        ax_traj.set_xlabel('x1')
-        ax_traj.set_ylabel('x2')
-        title_suffix = f" Sample {sample_index}" if sample_index is not None else ""
-        ax_traj.set_title(f"{system_name} {title_suffix} - 2D Trajectory".strip())
-        ax_traj.grid(True, linestyle='--', alpha=0.4)
-        ax_traj.legend(loc='best')
-    else:
-        ax_ts = axes
+    fig, ax_ts = plt.subplots(1, 1, figsize=(12, 5), constrained_layout=True)
 
     total_series = num_states + num_inputs
-    cmap = plt.cm.get_cmap('tab20', max(total_series, 1))
+    try:
+        cmap = plt.cm.get_cmap('tab20', max(total_series, 1))
+    except (AttributeError, TypeError):
+        # For matplotlib >= 3.7, get_cmap only takes colormap name
+        import matplotlib as mpl
+        cmap = mpl.colormaps['tab20']
 
     for idx in range(num_states):
         ax_ts.plot(time, state_data[idx], label=f"x{idx + 1}", color=cmap(idx), linewidth=2)
@@ -139,15 +128,15 @@ def creat_data(json_path: str, data_path: str, dT: float, times: float):
             # print("change_points.shape: ", len(change_points))
             '''
             ball
-            state_data.shape:  (2, 10001)
-            mode_data.shape:  (10001,)
-            input_data.shape:  (0, 10001)
+            state_data.shape:  (2, 1001)
+            mode_data.shape:  (1001,)
+            input_data.shape:  (0, 1001)
             change_points.shape:  22
             ----------------------------
             duffing
-            state_data.shape:  (1, 10001)
-            mode_data.shape:  (10001,)
-            input_data.shape:  (1, 10001)
+            state_data.shape:  (1, 1001)
+            mode_data.shape:  (1001,)
+            input_data.shape:  (1, 1001)
             change_points.shape:  13
             ----------------------------
             '''
@@ -164,5 +153,6 @@ def creat_data(json_path: str, data_path: str, dT: float, times: float):
 
 
 if __name__ == "__main__":
-    creat_data('automata/non_linear/duffing.json', 'data_duffing', 0.001, 10)
+    # creat_data('automata/non_linear/duffing.json', 'data_duffing', 0.001, 10)
     # creat_data('automata/ATVA/ball.json', 'data_ball', 0.001, 10)
+    creat_data('automata/non_linear/lander.json', 'data_lander', 0.01, 10)
