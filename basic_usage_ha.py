@@ -34,6 +34,7 @@ result_ha = llmlex.single_call_ha(client, base64_img_ha, state_data, input_data,
 # View results
 print(f"HA dict: {result_ha['ha_dict']}")
 
+
 # For more complex problems, use genetic algorithm approach
 # populations = llmlex.run_genetic(
 #     client, base64_img, x, y, 
