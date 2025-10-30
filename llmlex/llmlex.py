@@ -289,10 +289,7 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
             # Generate the prompt
             logger.debug("Generating prompt")
             prompt = get_prompt_ha(state_data, input_data, imports=imports)
-            # save the prompt to python file
-            prompt_path = Path('prompts/prompt_ha.py')
-            if isinstance(prompt, str):
-                prompt_path.write_text(prompt)
+            print(f"prompt: {prompt}")
             try:
                 # Only make a new API call on the first attempt or if we need to retry with a new call
                 if retry_count == 1 or response is None:

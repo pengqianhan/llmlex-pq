@@ -301,6 +301,19 @@ def get_prompt(function_list=None, imports=None):
 
 def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
     """
+    
+    """
+    num_state_vars = state_data.shape[0]
+    num_input_vars = input_data.shape[0]
+    var_list = [f"x{i+1}" for i in range(num_state_vars)]
+    input_vars = [f"u{i+1}" for i in range(num_input_vars)]
+    from prompts.prompt_ha import prompt
+    # prompt = prompt.replace("x1", ", ".join(var_list))
+    # prompt = prompt.replace("u1", ", ".join(input_vars))
+    
+    return prompt
+def get_prompt_ha_python_code(state_data, input_data, imports=None, include_comments=True):
+    """
     Generates an initial hybrid automaton dictionary from lambda-style definitions.
     This is similar to how get_prompt works for symbolic regression, but for hybrid automata.
     
@@ -418,7 +431,6 @@ def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
     
     logger.debug(f"Generated HA dict with comments: {result_with_comments}")
     return result_with_comments
-
 
 @rate_limit_api_call
 def call_model(client, model, image, prompt, system_prompt=None):

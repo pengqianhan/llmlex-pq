@@ -1,4 +1,4 @@
-
+prompt = """
 # Hybrid Automaton v0
 PROMPT_HA_v0 = {
     "automaton": {  # automaton
@@ -37,3 +37,4 @@ PROMPT_HA_v0 = {
 }
 
 # Hybrid Automaton v1
+"""
