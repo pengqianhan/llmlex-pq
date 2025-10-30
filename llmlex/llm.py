@@ -299,7 +299,7 @@ def get_prompt(function_list=None, imports=None):
     logger.debug(f"Generated prompt with {len(function_list)} functions and {len(imports)} imports")
     return prompt
 
-def get_prompt_ha(state_data, input_data, imports=None, include_comments=True):
+def get_prompt_ha(state_data, input_data, imports=None):
     """
     
     """
