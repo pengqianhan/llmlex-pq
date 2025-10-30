@@ -32,9 +32,7 @@ system_prompt = open('prompts/system_prompt.md', 'r').read()
 result_ha = llmlex.single_call_ha(client, base64_img_ha, state_data, input_data, model=model_name,system_prompt=system_prompt)
 
 # View results
-print(f"Best function: {result_ha['ansatz']}")
-print(f"Parameters: {result_ha['params']}")
-print(f"Score: {result_ha['score']}")
+print(f"HA dict: {result_ha['ha_dict']}")
 
 # For more complex problems, use genetic algorithm approach
 # populations = llmlex.run_genetic(
