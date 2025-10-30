@@ -64,7 +64,9 @@ def ha_evaluation(json_path: str, data_path: str, dT: float, times: float):
     
     print('init_state_dict: ', init_state_dict)
     # Use numpy array directly instead of function expression
-    init_state_dict['u'] = input_list
+    # Match the input variable name from automaton definition
+    input_var_name = data['automaton']['input']
+    init_state_dict[input_var_name] = input_list
     # print('input_list: ', input_list)
     # print('input_list.shape: ', input_list.shape)
     print('init_state_dict with array input: ', {k: v if not isinstance(v, np.ndarray) else f'<array shape={v.shape}>' for k, v in init_state_dict.items()})
