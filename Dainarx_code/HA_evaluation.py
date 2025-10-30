@@ -106,4 +106,23 @@ if __name__ == "__main__":
         "other_items": ""
     }
 }
-    ha_evaluation(data, 'data_duffing_evaluation', 0.001, 10)
+    data1 = {
+    "automaton": {
+        "var": "x1, x2",
+        "input": "u1",
+        "mode": [
+            {
+                "id": 1,
+                "eq": "x1[1] = x2[0], x2[1] = -0.1 * x2[0] - 1.0 * x1[0] - 1.0 * x1[0]**3 + u1"
+            }
+        ],
+        "edge": []
+    },
+    "config": {
+        "dt": 0.001,
+        "total_time": 10.0,
+        "dim": 2,
+        "other_items": ""
+    }
+}
+    ha_evaluation(data1, 'data_duffing_evaluation', 0.001, 10)
