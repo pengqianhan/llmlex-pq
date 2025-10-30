@@ -17,7 +17,7 @@ def ha_evaluation(json_path: str, data_path: str, dT: float, times: float):
     """
 
 
-    data_dict = {
+    data = {
     "automaton": {
         "var": "x1",
         "input": "u1",
@@ -37,15 +37,8 @@ def ha_evaluation(json_path: str, data_path: str, dT: float, times: float):
     }
 }
     # Use dictionary directly
-    data = data_dict
-    print('data: ', data)
-    
-    # Convert automaton to JSON string and back to dict for from_json
-    automaton_json = json.dumps(data["automaton"], indent=2, ensure_ascii=False)
-    print('automaton_json: ', automaton_json)
-    automaton_dict = json.loads(automaton_json)
-    print('data["automaton"]: ', automaton_dict)
-    sys = HybridAutomata.from_json(automaton_dict)
+
+    sys = HybridAutomata.from_json(data['automaton'])
     dT = data['config']['dt']
     state_id = 0
     cnt = 0
