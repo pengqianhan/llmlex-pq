@@ -296,7 +296,6 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
                     logger.debug(f"system_prompt: {system_prompt}")# None
                     logger.debug(f"prompt: {prompt}")
                     response = call_model_ha(client, model, img, prompt, system_prompt=system_prompt)
-                    # response = call_model_ha_json(client, model, img, prompt, system_prompt=system_prompt)
 
                 stats.stage_success("api_call")
             except Exception as e:
@@ -305,12 +304,13 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
                 logger.error(f"API call failed: {e}")
                 continue
             
-            # Extract ansatz
+            # Extract ha_dict
             try:
-                logger.debug("Extracting ansatz from response")
+                logger.debug("Extracting ha_dict from response")
                 logger.info(f"Response: {response}")
                 ha_dict = extract_ha(response)
-                
+                logger.info(f"Extracted ha_dict: {ha_dict}")
+                stats.stage_success("ha_extraction")
             except Exception as e:
                 stats.stage_failure("ha_extraction", e)
                 last_error = e

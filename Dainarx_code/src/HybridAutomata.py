@@ -1,8 +1,8 @@
 import re
 
 import numpy as np
-from src.DE import ODE
-from src.ODE_System import ODESystem
+from Dainarx_code.src.DE import ODE
+from Dainarx_code.src.ODE_System import ODESystem
 import json
 import matplotlib.pyplot as plt
 from math import *

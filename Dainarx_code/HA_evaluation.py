@@ -3,9 +3,9 @@ import os
 from math import *
 import matplotlib.pyplot as plt
 from typing import Optional
-from src.HybridAutomata import HybridAutomata
+from Dainarx_code.src.HybridAutomata import HybridAutomata
 import json
-from CreatData import plot_fun
+from Dainarx_code.CreatData import plot_fun
 
 
 def ha_evaluation(data: dict, data_path: str, dT: float, times: float):
@@ -20,7 +20,7 @@ def ha_evaluation(data: dict, data_path: str, dT: float, times: float):
     
     # Use dictionary directly
 
-    sys = HybridAutomata.from_json(data['automaton'])
+    sys = HybridAutomata.from_json(data["automaton"])
     dT = data['config']['dt']
     state_id = 0
     cnt = 0
