@@ -308,7 +308,7 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
             try:
                 logger.debug("Extracting ha_dict from response")
                 ha_dict = extract_ha(response)
-                logger.info(f"Extracted ha_dict: {ha_dict}")
+                logger.debug(f"Extracted ha_dict: {ha_dict}")
                 stats.stage_success("ha_extraction")
             except Exception as e:
                 stats.stage_failure("ha_extraction", e)
@@ -317,8 +317,6 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
                 # For these errors, we might want to try a new API call
                 response = None
                 continue
-            
-            
             
             # plot and evaluate the ha_dict
             try:

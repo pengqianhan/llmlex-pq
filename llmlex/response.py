@@ -17,7 +17,7 @@ def extract_ha(response):
     """
     logger.debug("Extracting hybrid automaton from model response")
     ha_content = response.choices[0].message.content
-    logger.info(f'ha_content: {ha_content}')
+    logger.debug(f'ha_content: {ha_content}')
     
     # Parse the JSON string into a Python dictionary
     try:

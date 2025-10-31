@@ -44,14 +44,12 @@ def ha_evaluation(data: dict, data_path: str, dT: float, times: float):
         for i, var_name in enumerate(var_names):
             init_state_dict[var_name] = [init_state[i]] if i < len(init_state) else [0.0]
     
-    print('init_state_dict: ', init_state_dict)
     # Use numpy array directly instead of function expression
     # Match the input variable name from automaton definition
     input_var_name = data['automaton']['input']
     init_state_dict[input_var_name] = input_list
-    # print('input_list: ', input_list)
-    # print('input_list.shape: ', input_list.shape)
-    print('init_state_dict with array input: ', {k: v if not isinstance(v, np.ndarray) else f'<array shape={v.shape}>' for k, v in init_state_dict.items()})
+
+    # print('init_state_dict with array input: ', {k: v if not isinstance(v, np.ndarray) else f'<array shape={v.shape}>' for k, v in init_state_dict.items()})
     
     
     # data['init_state'] = [{'mode': 1, 'x': [4], 'u': '0.5 * cos(1.2 * t)'}]
