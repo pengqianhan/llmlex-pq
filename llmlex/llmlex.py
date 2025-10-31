@@ -307,7 +307,6 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
             # Extract ha_dict
             try:
                 logger.debug("Extracting ha_dict from response")
-                logger.info(f"Response: {response}")
                 ha_dict = extract_ha(response)
                 logger.info(f"Extracted ha_dict: {ha_dict}")
                 stats.stage_success("ha_extraction")

@@ -2,6 +2,7 @@ import re
 import numpy as np
 from scipy import special
 import logging
+import json
 
 # Get module logger
 logger = logging.getLogger("LLMLEx.response")
@@ -15,9 +16,34 @@ def extract_ha(response):
         dict: A dictionary containing the hybrid automaton.
     """
     logger.debug("Extracting hybrid automaton from model response")
-    ha_dict = response.choices[0].message.content
-
-    return ha_dict
+    ha_content = response.choices[0].message.content
+    logger.info(f'ha_content: {ha_content}')
+    
+    # Parse the JSON string into a Python dictionary
+    try:
+        # Try to extract JSON from code blocks if present
+        # Check for ```json, ```python, or plain ``` code blocks
+        code_block_patterns = [
+            r'```json\s*(.*?)\s*```',
+            r'```python\s*(.*?)\s*```',
+            r'```\s*(.*?)\s*```'
+        ]
+        
+        for pattern in code_block_patterns:
+            json_match = re.search(pattern, ha_content, re.DOTALL)
+            if json_match:
+                ha_content = json_match.group(1).strip()
+                logger.debug(f"Extracted content from code block: {ha_content[:100]}...")
+                break
+        
+        # Parse the JSON string
+        ha_dict = json.loads(ha_content)
+        logger.debug(f"Successfully parsed HA JSON with keys: {ha_dict.keys()}")
+        return ha_dict
+    except json.JSONDecodeError as e:
+        logger.error(f"Failed to parse HA JSON: {e}")
+        logger.error(f"Raw content: {ha_content}")
+        raise ValueError(f"Failed to parse hybrid automaton JSON: {e}")
 
 
 def extract_ansatz(response):
