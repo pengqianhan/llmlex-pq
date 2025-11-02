@@ -210,6 +210,47 @@ def generate_base64_image_ha(state_data: np.ndarray,
         logger.error(f"Error generating base64 HA image: {e}", exc_info=True)
         raise
 
+def generate_base64_image_ha_evaluation(state_data: np.ndarray,
+                                         input_data: np.ndarray,
+                                         dt: float,
+                                         save_path: Optional[str] = None) -> str:
+    """
+    Generates a base64 encoded PNG image for hybrid automata data using plot_ha from HA_evaluation.
+
+    This function uses the plot_ha function from Dainarx_code.HA_evaluation to create
+    a visualization and returns a base64 encoded image suitable for LLM analysis.
+
+    Args:
+        state_data (np.ndarray): 2D array with shape (num_states, num_steps).
+        input_data (np.ndarray): Input data (empty, 1D, or 2D array).
+        dt (float): Time step size.
+        save_path (str, optional): Path to save the figure. Defaults to None.
+
+    Returns:
+        str: The base64 encoded string of the PNG image.
+    """
+    logger.debug(f"Generating base64 image for HA data using plot_ha: {state_data.shape}")
+
+    try:
+        from Dainarx_code.HA_evaluation import plot_ha
+
+        # Call plot_ha with return_base64=True to get the base64 encoded image
+        base64_image = plot_ha(
+            state_data=state_data,
+            input_data=input_data,
+            dt=dt,
+            save_path=save_path,
+            input_plot=True,  # Always plot inputs to match generate_base64_image_ha behavior
+            return_base64=True
+        )
+
+        logger.debug(f"Successfully generated base64 HA image: {len(base64_image)} characters")
+        return base64_image
+
+    except Exception as e:
+        logger.error(f"Error generating base64 HA image with plot_ha: {e}", exc_info=True)
+        raise
+
 
 def generate_base64_image_with_parents( x, y, parent_functions, fig = None, ax = None, actually_plot = False, title_override = None):
     """

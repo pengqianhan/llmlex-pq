@@ -5,13 +5,30 @@ import matplotlib.pyplot as plt
 from typing import Optional
 from Dainarx_code.src.HybridAutomata import HybridAutomata
 import json
+import base64
+import io
 
 def plot_ha(state_data: np.ndarray,
              input_data: np.ndarray,
              dt: float=0.001, # default time step
              save_path: Optional[str] = None,
-             input_plot: bool = False, **kwargs) -> None:
-    """Plot the time series for states/inputs."""
+             input_plot: bool = False,
+             return_base64: bool = False,
+             **kwargs) -> Optional[str]:
+    """Plot the time series for states/inputs.
+
+    Args:
+        state_data: 2D array with shape (num_states, num_steps)
+        input_data: Input data (empty, 1D, or 2D array)
+        dt: Time step size
+        save_path: Path to save the figure
+        input_plot: Whether to plot input data
+        return_base64: If True, return base64 encoded PNG image instead of None
+        **kwargs: Additional keyword arguments
+
+    Returns:
+        str: Base64 encoded PNG image if return_base64=True, otherwise None
+    """
 
     if state_data.ndim != 2:
         raise ValueError("state_data must be a 2D array with shape (num_states, num_steps)")
@@ -59,13 +76,25 @@ def plot_ha(state_data: np.ndarray,
     ax_ts.grid(True, linestyle='--', alpha=0.4)
     ax_ts.legend(loc='best')
 
+    # Save to file if requested
     if save_path is not None:
         directory = os.path.dirname(save_path)
         if directory:
             os.makedirs(directory, exist_ok=True)
         fig.savefig(save_path, dpi=150)
 
+    # Return base64 encoded image if requested
+    if return_base64:
+        buffer = io.BytesIO()
+        fig.savefig(buffer, format='png', dpi=100)
+        buffer.seek(0)
+        base64_image = base64.b64encode(buffer.getvalue()).decode("utf-8")
+        buffer.close()
+        plt.close(fig)
+        return base64_image
+
     plt.close(fig)
+    return None
 
 def ha_evaluation(data: dict, save_path: str, dT: float=0.001, times: float=10.0):
     r"""

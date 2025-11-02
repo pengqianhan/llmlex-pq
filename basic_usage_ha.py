@@ -22,8 +22,8 @@ input_data = npz_file['input']
 dt=0.001
 cnt = 0
 system_name = "Duffing Oscillator"
-base64_img_ha = llmlex.images.generate_base64_image_ha(state_data, input_data, dt, system_name,cnt,None)
-
+# base64_img_ha = llmlex.images.generate_base64_image_ha(state_data, input_data, dt, system_name,cnt,None)
+base64_img_ha = llmlex.images.generate_base64_image_ha_evaluation(state_data, input_data, dt, 'basic_usage_test_ha.png')
 # load system prompt
 system_prompt = open('prompts/system_prompt.md', 'r').read()
 
