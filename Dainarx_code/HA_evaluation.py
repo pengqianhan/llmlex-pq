@@ -108,7 +108,6 @@ def ha_evaluation(data: dict, save_path: str, dT: float=0.001, times: float=10.0
 
     sys = HybridAutomata.from_json(data["automaton"])
     dT = data['config']['dt']
-    state_id = 0
     cnt = 0
     # load npz file
     npz_file = np.load('data_duffing/test_data0.npz')
@@ -163,9 +162,8 @@ def ha_evaluation(data: dict, save_path: str, dT: float=0.001, times: float=10.0
         input_data = np.transpose(np.array(input_data))
         mode_data = np.array(mode_data)
         # plot data
-        figure_path = os.path.join(save_path, f"sample_{state_id}.png")
+        figure_path = os.path.join(save_path, f"output.png")
         plot_ha(state_data, input_data, dT, save_path=figure_path)
-        state_id += 1
 
 if __name__ == "__main__":
     data = {
