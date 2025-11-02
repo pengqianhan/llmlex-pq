@@ -8,12 +8,10 @@ import json
 
 def plot_ha(state_data: np.ndarray,
              input_data: np.ndarray,
-             dt: float,
-             system_name: str = "System",
-             sample_index: Optional[int] = None,
+             dt: float=0.001, # default time step
              save_path: Optional[str] = None,
              show: bool = True,
-             input_plot: bool = False) -> None:
+             input_plot: bool = False, **kwargs) -> None:
     """Plot the time series for states/inputs."""
 
     if state_data.ndim != 2:
@@ -57,8 +55,8 @@ def plot_ha(state_data: np.ndarray,
 
     ax_ts.set_xlabel('Time (s)')
     ax_ts.set_ylabel('Values')
-    title_suffix = f" Sample {sample_index - 1}" if sample_index is not None else ""
-    ax_ts.set_title(f"{system_name} {title_suffix} - Time Series".strip())
+    # title_suffix = f" Sample {sample_index - 1}" if sample_index is not None else ""
+    # ax_ts.set_title(f"{system_name} {title_suffix} - Time Series".strip())
     ax_ts.grid(True, linestyle='--', alpha=0.4)
     ax_ts.legend(loc='best')
 
@@ -73,15 +71,13 @@ def plot_ha(state_data: np.ndarray,
     else:
         plt.close(fig)
 
-def ha_evaluation(data: dict, data_path: str, dT: float, times: float):
+def ha_evaluation(data: dict, save_path: str, dT: float=0.001, times: float=10.0):
     r"""
     :param data: Dictionary containing the hybrid automaton.
-    :param data_path: Data storage path.
-    :param dT: Discrete time.
-    :param times: Total sampling time.
+    :param save_path: Image save path.
+    :param dT: time step, default 0.001.
+    :param times: Total sampling time, default 10.0.
     """
-
-
     
     # Use dictionary directly
 
@@ -142,12 +138,9 @@ def ha_evaluation(data: dict, data_path: str, dT: float, times: float):
         input_data = np.transpose(np.array(input_data))
         mode_data = np.array(mode_data)
         # plot data
-        system_title = 'duffing'
-        figure_path = os.path.join(data_path, f"sample_{state_id}.png")
-        plot_ha(state_data, input_data, dT, system_name=system_title,
-                    sample_index=cnt, save_path=figure_path, show=False)
+        figure_path = os.path.join(save_path, f"sample_{state_id}.png")
+        plot_ha(state_data, input_data, dT, save_path=figure_path, show=False)
         state_id += 1
-
 
 if __name__ == "__main__":
     data = {
