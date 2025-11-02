@@ -10,7 +10,6 @@ def plot_ha(state_data: np.ndarray,
              input_data: np.ndarray,
              dt: float=0.001, # default time step
              save_path: Optional[str] = None,
-             show: bool = True,
              input_plot: bool = False, **kwargs) -> None:
     """Plot the time series for states/inputs."""
 
@@ -66,10 +65,7 @@ def plot_ha(state_data: np.ndarray,
             os.makedirs(directory, exist_ok=True)
         fig.savefig(save_path, dpi=150)
 
-    if show:
-        plt.show()
-    else:
-        plt.close(fig)
+    plt.close(fig)
 
 def ha_evaluation(data: dict, save_path: str, dT: float=0.001, times: float=10.0):
     r"""
@@ -139,7 +135,7 @@ def ha_evaluation(data: dict, save_path: str, dT: float=0.001, times: float=10.0
         mode_data = np.array(mode_data)
         # plot data
         figure_path = os.path.join(save_path, f"sample_{state_id}.png")
-        plot_ha(state_data, input_data, dT, save_path=figure_path, show=False)
+        plot_ha(state_data, input_data, dT, save_path=figure_path)
         state_id += 1
 
 if __name__ == "__main__":
