@@ -108,7 +108,7 @@ def ha_evaluation(data: dict, save_path: str, dT: float=0.001, times: float=10.0
 
     sys = HybridAutomata.from_json(data["automaton"])
     dT = data['config']['dt']
-    # load npz file
+    # load npz file, only use the initial state and input
     npz_file = np.load('data_duffing/test_data0.npz')
     state_data_npz = npz_file['state']
     input_list = npz_file['input']
