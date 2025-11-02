@@ -20,7 +20,6 @@ npz_file = np.load('data_duffing/test_data0.npz')
 state_data = npz_file['state']
 input_data = npz_file['input']
 dt=0.001
-cnt = 0
 system_name = "Duffing Oscillator"
 base64_img_ha = llmlex.images.generate_base64_image_ha(state_data, input_data, dt, 'basic_usage_test_ha.png')
 # load system prompt
