@@ -1,0 +1,1 @@
+In the learningnotes folder, these files and codes are for learning and understanding the llmlex library.
