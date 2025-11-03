@@ -322,7 +322,7 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
             try:
                 logger.debug("Plotting and evaluating the ha_dict")
                 from Dainarx_code.HA_evaluation import ha_evaluation
-                ha_evaluation(ha_dict, 'data_duffing_evaluation', 0.001, 10)
+                ha_evaluation(ha_dict, 'duffing_ha_output', 0.001, 10)
                 stats.stage_success("ha_evaluation")
             except Exception as e:
                 stats.stage_failure("ha_evaluation", e)
