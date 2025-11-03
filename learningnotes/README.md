@@ -1,1 +1,1 @@
-In the learningnotes folder, these files and codes are for learning and understanding the llmlex library.
+In the learningnotes folder, these files and codes are for learning and understanding the llmlex library. When you implement new features or fix bugs, IGNORE the learningnotes folder and the files in it.
