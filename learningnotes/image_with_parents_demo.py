@@ -89,15 +89,15 @@ def main():
     print(f"✓ 图像已保存到: {output_path}")
 
     # 5. 可选：使用 matplotlib 显示图像
-    print("\n显示图像...")
-    plt.figure(figsize=(10, 6))
-    plt.imshow(image)
-    plt.axis('off')
-    plt.title("generate_base64_image_with_parents 生成的图像", fontsize=14, pad=20)
-    plt.tight_layout()
-    output_path_with_frame = os.path.join(script_dir, "example_parents_with_frame.png")
-    plt.savefig(output_path_with_frame, dpi=150, bbox_inches='tight')
-    print(f"✓ 带框架的图像已保存到: {output_path_with_frame}")
+    # print("\n显示图像...")
+    # plt.figure(figsize=(10, 6))
+    # plt.imshow(image)
+    # plt.axis('off')
+    # plt.title("generate_base64_image_with_parents 生成的图像", fontsize=14, pad=20)
+    # plt.tight_layout()
+    # output_path_with_frame = os.path.join(script_dir, "example_parents_with_frame.png")
+    # plt.savefig(output_path_with_frame, dpi=150, bbox_inches='tight')
+    # print(f"✓ 带框架的图像已保存到: {output_path_with_frame}")
 
     # 6. 解释图像内容
     print("\n" + "=" * 60)
