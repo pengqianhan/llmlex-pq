@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Genetic Algorithm Flow Diagram - run_genetic Function</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Arial, sans-serif;
+            line-height: 1.8;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 40px;
+            font-size: 2.5em;
+            border-bottom: 4px solid #667eea;
+            padding-bottom: 20px;
+        }
+
+        h2 {
+            color: #764ba2;
+            margin-top: 40px;
+            margin-bottom: 20px;
+            font-size: 1.8em;
+            border-left: 5px solid #764ba2;
+            padding-left: 15px;
+        }
+
+        .diagram {
+            text-align: center;
+            margin: 30px 0;
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        .info-box {
+            background: #e8f4f8;
+            border-left: 4px solid #2196F3;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            color: #e83e8c;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        li {
+            margin: 8px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧬 Genetic Algorithm Flow Diagram</h1>
+
+        <!-- Algorithm Flow Diagram -->
+        <h2>🔄 Complete Algorithm Flow (population_size=5, num_of_generations=3)</h2>
+
+        <div class="info-box">
+            <p><strong>This diagram is based on the following parameters:</strong></p>
+            <ul>
+                <li><code>population_size = 5</code>: Each generation has 5 candidate formulas</li>
+                <li><code>num_of_generations = 3</code>: Total of 3 generations of evolution</li>
+                <li>Uses asynchronous parallel LLM calls</li>
+                <li>Uses temperature-controlled Boltzmann selection</li>
+            </ul>
+        </div>
+
+        <div class="diagram">
+            <svg width="1100" height="1350" viewBox="0 0 1100 1350" style="max-width: 100%; height: auto;">
+                <!-- Arrow markers -->
+                <defs>
+                    <marker id="arrowblue" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                        <path d="M0,0 L0,6 L9,3 z" fill="#667eea" />
+                    </marker>
+                    <marker id="arrowpurple" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                        <path d="M0,0 L0,6 L9,3 z" fill="#764ba2" />
+                    </marker>
+                    <marker id="arrowgreen" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth">
+                        <path d="M0,0 L0,6 L9,3 z" fill="#2e7d32" />
+                    </marker>
+                </defs>
+
+                <!-- Title -->
+                <text x="550" y="30" text-anchor="middle" font-size="20" font-weight="bold" fill="#667eea">Complete Genetic Algorithm Flow (3 Generations, 5 Individuals Each)</text>
+
+                <!-- Phase 0: Initialization -->
+                <rect x="300" y="60" width="500" height="70" fill="#e8f4f8" stroke="#2196F3" stroke-width="3" rx="10"/>
+                <text x="550" y="88" text-anchor="middle" font-weight="bold" font-size="15">Phase 0: Initialization</text>
+                <text x="550" y="108" text-anchor="middle" font-size="12">Check constant function baseline, if χ²_n ≤ exit_condition → Return directly</text>
+
+                <!-- Arrow down -->
+                <line x1="550" y1="130" x2="550" y2="165" stroke="#667eea" stroke-width="3" marker-end="url(#arrowblue)"/>
+
+                <!-- Phase 1: Initial Population -->
+                <rect x="50" y="165" width="1000" height="150" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="3" rx="10"/>
+                <text x="550" y="190" text-anchor="middle" font-weight="bold" font-size="15">Generation 0: Generate Initial Population (5 Individuals)</text>
+                <text x="550" y="210" text-anchor="middle" font-size="12">Asynchronous parallel LLM calls, max 10 concurrent requests</text>
+
+                <!-- LLM API Box -->
+                <rect x="450" y="225" width="200" height="45" fill="#667eea" rx="8"/>
+                <text x="550" y="252" text-anchor="middle" fill="white" font-weight="bold" font-size="13">🤖 LLM API</text>
+
+                <!-- 5 individuals being generated -->
+                <circle cx="150" cy="295" r="18" fill="#98c379" stroke="#2e7d32" stroke-width="2"/>
+                <text x="150" y="300" text-anchor="middle" fill="white" font-weight="bold" font-size="12">1</text>
+                <line x1="168" y1="287" x2="450" y2="252" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowpurple)"/>
+
+                <circle cx="325" cy="295" r="18" fill="#98c379" stroke="#2e7d32" stroke-width="2"/>
+                <text x="325" y="300" text-anchor="middle" fill="white" font-weight="bold" font-size="12">2</text>
+                <line x1="343" y1="287" x2="480" y2="265" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowpurple)"/>
+
+                <circle cx="500" cy="295" r="18" fill="#98c379" stroke="#2e7d32" stroke-width="2"/>
+                <text x="500" y="300" text-anchor="middle" fill="white" font-weight="bold" font-size="12">3</text>
+                <line x1="508" y1="295" x2="540" y2="270" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowpurple)"/>
+
+                <circle cx="675" cy="295" r="18" fill="#98c379" stroke="#2e7d32" stroke-width="2"/>
+                <text x="675" y="300" text-anchor="middle" fill="white" font-weight="bold" font-size="12">4</text>
+                <line x1="660" y1="287" x2="600" y2="265" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowpurple)"/>
+
+                <circle cx="850" cy="295" r="18" fill="#98c379" stroke="#2e7d32" stroke-width="2"/>
+                <text x="850" y="300" text-anchor="middle" fill="white" font-weight="bold" font-size="12">5</text>
+                <line x1="832" y1="287" x2="650" y2="252" stroke="#764ba2" stroke-width="2" marker-end="url(#arrowpurple)"/>
+
+                <!-- Arrow down -->
+                <line x1="550" y1="315" x2="550" y2="350" stroke="#667eea" stroke-width="3" marker-end="url(#arrowblue)"/>
+
+                <!-- Evaluation & Selection for Gen 1 -->
+                <rect x="50" y="350" width="1000" height="220" fill="#fff9c4" stroke="#f57f17" stroke-width="3" rx="10"/>
+                <text x="550" y="375" text-anchor="middle" font-weight="bold" font-size="15">Generation 0: Evaluation & Sorting & Parent Selection</text>
+
+                <!-- Sorted population -->
+                <text x="230" y="400" text-anchor="middle" font-size="12" font-weight="bold">Sorted Population:</text>
+                <rect x="80" y="410" width="300" height="28" fill="#ffcdd2" stroke="#c62828" stroke-width="2" rx="5"/>
+                <text x="230" y="429" text-anchor="middle" font-size="11">🔴 Individual 2: score=-50</text>
+
+                <rect x="80" y="443" width="300" height="28" fill="#ffe0b2" stroke="#e65100" stroke-width="2" rx="5"/>
+                <text x="230" y="462" text-anchor="middle" font-size="11">🟠 Individual 1: score=-20</text>
+
+                <rect x="80" y="476" width="300" height="28" fill="#fff9c4" stroke="#f57f17" stroke-width="2" rx="5"/>
+                <text x="230" y="495" text-anchor="middle" font-size="11">🟡 Individual 4: score=-10</text>
+
+                <rect x="80" y="509" width="300" height="28" fill="#c8e6c9" stroke="#388e3c" stroke-width="2" rx="5"/>
+                <text x="230" y="528" text-anchor="middle" font-size="11">🟢 Individual 3: score=-2.5</text>
+
+                <rect x="80" y="542" width="300" height="28" fill="#a5d6a7" stroke="#2e7d32" stroke-width="2" rx="5"/>
+                <text x="230" y="561" text-anchor="middle" font-size="11" font-weight="bold">⭐ Individual 5: score=-0.8</text>
+
+                <!-- Selection probabilities -->
+                <text x="690" y="400" text-anchor="middle" font-size="12" font-weight="bold">Selection Probability (Boltzmann):</text>
+
+                <g>
+                    <rect x="450" y="410" width="450" height="18" fill="#e0e0e0" rx="3"/>
+                    <rect x="450" y="410" width="13" height="18" fill="#ffcdd2" rx="3"/>
+                    <text x="910" y="423" font-size="10" text-anchor="end">3%</text>
+                </g>
+
+                <g>
+                    <rect x="450" y="433" width="450" height="18" fill="#e0e0e0" rx="3"/>
+                    <rect x="450" y="433" width="54" height="18" fill="#ffe0b2" rx="3"/>
+                    <text x="910" y="446" font-size="10" text-anchor="end">12%</text>
+                </g>
+
+                <g>
+                    <rect x="450" y="456" width="450" height="18" fill="#e0e0e0" rx="3"/>
+                    <rect x="450" y="456" width="113" height="18" fill="#fff9c4" rx="3"/>
+                    <text x="910" y="469" font-size="10" text-anchor="end">25%</text>
+                </g>
+
+                <g>
+                    <rect x="450" y="479" width="450" height="18" fill="#e0e0e0" rx="3"/>
+                    <rect x="450" y="479" width="180" height="18" fill="#c8e6c9" rx="3"/>
+                    <text x="910" y="492" font-size="10" text-anchor="end">40%</text>
+                </g>
+
+                <g>
+                    <rect x="450" y="502" width="450" height="18" fill="#e0e0e0" rx="3"/>
+                    <rect x="450" y="502" width="90" height="18" fill="#a5d6a7" rx="3"/>
+                    <text x="910" y="515" font-size="10" text-anchor="end">20%</text>
+                </g>
+
+                <text x="690" y="545" text-anchor="middle" font-size="11" font-style="italic">Higher score → Higher selection probability</text>
+                <text x="690" y="563" text-anchor="middle" font-size="11" font-style="italic">Best individual always included in next generation</text>
+
+                <!-- Arrow down -->
+                <line x1="550" y1="570" x2="550" y2="605" stroke="#667eea" stroke-width="3" marker-end="url(#arrowblue)"/>
+
+                <!-- Generation 1 -->
+                <rect x="50" y="605" width="1000" height="180" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="3" rx="10"/>
+                <text x="550" y="630" text-anchor="middle" font-weight="bold" font-size="15">Generation 1: Generate New Population (5 Individuals)</text>
+                <text x="550" y="650" text-anchor="middle" font-size="12">Based on selected parents, generate 4 new individuals + 1 elite</text>
+
+                <!-- Elite individual -->
+                <g>
+                    <rect x="80" y="670" width="180" height="40" fill="#a5d6a7" stroke="#2e7d32" stroke-width="2" rx="5"/>
+                    <text x="170" y="693" text-anchor="middle" font-size="11" font-weight="bold">⭐ Elite (Individual 5)</text>
+                    <text x="170" y="705" text-anchor="middle" font-size="9">Directly copied</text>
+                </g>
+
+                <!-- Arrow pointing to elite -->
+                <line x1="230" y1="560" x2="230" y2="670" stroke="#2e7d32" stroke-width="2" stroke-dasharray="5,5" marker-end="url(#arrowgreen)"/>
+
+                <!-- New individuals -->
+                <circle cx="400" cy="690" r="18" fill="#b39ddb" stroke="#5e35b1" stroke-width="2"/>
+                <text x="400" y="695" text-anchor="middle" fill="white" font-weight="bold" font-size="12">6</text>
+                <text x="400" y="730" text-anchor="middle" font-size="9">New via LLM</text>
+
+                <circle cx="550" cy="690" r="18" fill="#b39ddb" stroke="#5e35b1" stroke-width="2"/>
+                <text x="550" y="695" text-anchor="middle" fill="white" font-weight="bold" font-size="12">7</text>
+                <text x="550" y="730" text-anchor="middle" font-size="9">New via LLM</text>
+
+                <circle cx="700" cy="690" r="18" fill="#b39ddb" stroke="#5e35b1" stroke-width="2"/>
+                <text x="700" y="695" text-anchor="middle" fill="white" font-weight="bold" font-size="12">8</text>
+                <text x="700" y="730" text-anchor="middle" font-size="9">New via LLM</text>
+
+                <circle cx="850" cy="690" r="18" fill="#b39ddb" stroke="#5e35b1" stroke-width="2"/>
+                <text x="850" y="695" text-anchor="middle" fill="white" font-weight="bold" font-size="12">9</text>
+                <text x="850" y="730" text-anchor="middle" font-size="9">New via LLM</text>
+
+                <text x="550" y="760" text-anchor="middle" font-size="11" font-style="italic">Each generation = 1 elite + 4 new individuals</text>
+
+                <!-- Arrow down -->
+                <line x1="550" y1="785" x2="550" y2="820" stroke="#667eea" stroke-width="3" marker-end="url(#arrowblue)"/>
+
+                <!-- Evaluation & Selection for Gen 2 -->
+                <rect x="50" y="820" width="1000" height="100" fill="#fff9c4" stroke="#f57f17" stroke-width="3" rx="10"/>
+                <text x="550" y="845" text-anchor="middle" font-weight="bold" font-size="15">Generation 1: Evaluation & Sorting & Parent Selection</text>
+                <text x="550" y="870" text-anchor="middle" font-size="12">Evaluate 5 individuals, sort by score, select parents using Boltzmann distribution</text>
+                <text x="550" y="890" text-anchor="middle" font-size="11" font-style="italic">Best individual from Gen 1 → Elite for Gen 2</text>
+
+                <!-- Arrow down -->
+                <line x1="550" y1="920" x2="550" y2="955" stroke="#667eea" stroke-width="3" marker-end="url(#arrowblue)"/>
+
+                <!-- Generation 2 -->
+                <rect x="50" y="955" width="1000" height="120" fill="#f3e5f5" stroke="#7b1fa2" stroke-width="3" rx="10"/>
+                <text x="550" y="980" text-anchor="middle" font-weight="bold" font-size="15">Generation 2: Generate New Population (5 Individuals)</text>
+                <text x="550" y="1005" text-anchor="middle" font-size="12">1 elite + 4 new individuals generated via LLM based on selected parents</text>
+
+                <g>
+                    <circle cx="230" cy="1035" r="15" fill="#a5d6a7" stroke="#2e7d32" stroke-width="2"/>
+                    <text x="230" y="1040" text-anchor="middle" fill="white" font-weight="bold" font-size="10">E</text>
+                    <text x="230" y="1060" text-anchor="middle" font-size="9">Elite</text>
+                </g>
+
+                <circle cx="380" cy="1035" r="15" fill="#b39ddb" stroke="#5e35b1" stroke-width="2"/>
+                <text x="380" y="1040" text-anchor="middle" fill="white" font-weight="bold" font-size="10">10</text>
+
+                <circle cx="500" cy="1035" r="15" fill="#b39ddb" stroke="#5e35b1" stroke-width="2"/>
+                <text x="500" y="1040" text-anchor="middle" fill="white" font-weight="bold" font-size="10">11</text>
+
+                <circle cx="620" cy="1035" r="15" fill="#b39ddb" stroke="#5e35b1" stroke-width="2"/>
+                <text x="620" y="1040" text-anchor="middle" fill="white" font-weight="bold" font-size="10">12</text>
+
+                <circle cx="770" cy="1035" r="15" fill="#b39ddb" stroke="#5e35b1" stroke-width="2"/>
+                <text x="770" y="1040" text-anchor="middle" fill="white" font-weight="bold" font-size="10">13</text>
+
+                <!-- Arrow down -->
+                <line x1="550" y1="1075" x2="550" y2="1110" stroke="#667eea" stroke-width="3" marker-end="url(#arrowblue)"/>
+
+                <!-- Final Evaluation -->
+                <rect x="50" y="1110" width="1000" height="100" fill="#fff9c4" stroke="#f57f17" stroke-width="3" rx="10"/>
+                <text x="550" y="1135" text-anchor="middle" font-weight="bold" font-size="15">Generation 2: Final Evaluation & Sorting</text>
+                <text x="550" y="1160" text-anchor="middle" font-size="12">Evaluate 5 individuals, sort by score</text>
+                <text x="550" y="1180" text-anchor="middle" font-size="11" font-style="italic">End of evolution: Last generation's population is the final result</text>
+
+                <!-- Arrow down -->
+                <line x1="550" y1="1210" x2="550" y2="1245" stroke="#667eea" stroke-width="3" marker-end="url(#arrowblue)"/>
+
+                <!-- Return Result -->
+                <rect x="300" y="1245" width="500" height="80" fill="#e8f5e9" stroke="#4caf50" stroke-width="3" rx="10"/>
+                <text x="550" y="1275" text-anchor="middle" font-weight="bold" font-size="15">✅ Return Result</text>
+                <text x="550" y="1300" text-anchor="middle" font-size="12">List of all generation populations (sorted by score)</text>
+                <text x="550" y="1317" text-anchor="middle" font-size="11">populations[0][0] = Best individual overall</text>
+            </svg>
+        </div>
+
+        <div class="info-box">
+            <p><strong>Key Points:</strong></p>
+            <ul>
+                <li><strong>Initialization:</strong> Check if a constant function is sufficient (baseline test)</li>
+                <li><strong>Generation 0:</strong> Generate initial population using LLM without parent context</li>
+                <li><strong>Selection:</strong> Use Boltzmann distribution to select parents based on fitness scores</li>
+                <li><strong>Elitism:</strong> Best individual from each generation is automatically preserved</li>
+                <li><strong>Generation 1-N:</strong> Generate new individuals using selected parents as context</li>
+                <li><strong>Parallel Processing:</strong> Use async calls to generate multiple individuals simultaneously</li>
+                <li><strong>Final Result:</strong> All generations are returned, sorted by score within each generation</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
