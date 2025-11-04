@@ -26,15 +26,22 @@ base64_img_ha = llmlex.images.generate_base64_image_ha(state_data, input_data, d
 system_prompt = open('prompts/system_prompt.md', 'r').read()
 
 # Run symbolic regression
-# result = llmlex.single_call(client, base64_img, x, y, model=model_name)
-result_ha = llmlex.single_call_ha(client, base64_img_ha, state_data, input_data, model=model_name,system_prompt=system_prompt)
+# result_ha = llmlex.single_call_ha(client, base64_img_ha, state_data, input_data, model=model_name,system_prompt=system_prompt)
 
-# View results
-print(f"HA dict: {result_ha['ha_dict']}")
+# # View results
+# print(f"HA dict: {result_ha['ha_dict']}")
 
 # For more complex problems, use genetic algorithm approach
-# populations = llmlex.run_genetic(
-#     client, base64_img, x, y, 
-#     population_size=5, num_of_generations=3,
-#     model=model_name
-# )
+populations = llmlex.run_genetic_ha(
+    client, base64_img_ha, state_data, input_data,
+    population_size=3, num_of_generations=2,
+    model=model_name,
+    system_prompt=system_prompt,
+    dt=dt,
+    total_time=10.0
+)
+
+# View results
+print(f"\nBest HA from genetic algorithm:")
+print(f"Score: {populations[-1][-1]['score']}")
+print(f"HA dict: {populations[-1][-1]['ha_dict']}")

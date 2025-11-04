@@ -16,7 +16,22 @@ def extract_ha(response):
         dict: A dictionary containing the hybrid automaton.
     """
     logger.debug("Extracting hybrid automaton from model response")
-    ha_content = response.choices[0].message.content
+    
+    # Handle different response types
+    if isinstance(response, str):
+        ha_content = response
+    elif hasattr(response, 'choices') and len(response.choices) > 0:
+        if hasattr(response.choices[0], 'message') and hasattr(response.choices[0].message, 'content'):
+            ha_content = response.choices[0].message.content
+        elif hasattr(response.choices[0], 'text'):
+            ha_content = response.choices[0].text
+        else:
+            logger.error("Unexpected response format - can't find content")
+            raise ValueError("Response format not recognized: no content found")
+    else:
+        logger.error(f"Unexpected response type: {type(response)}")
+        raise ValueError(f"Unexpected response type: {type(response)}")
+    
     logger.debug(f'ha_content: {ha_content}')
     
     # Parse the JSON string into a Python dictionary

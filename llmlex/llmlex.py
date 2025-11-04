@@ -241,32 +241,105 @@ def single_call(client, img, x, y, model="openai/gpt-5-nano-2025-08-07-mini", fu
     else:
         logger.error("Unknown error in single_call")
         raise RuntimeError("Unknown error in single_call")
-def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano-2025-08-07-mini", function_list=None, system_prompt=None, max_retries=3, stats=None, imports=None):
+def score_ha(ha_dict, ground_truth_state, ground_truth_input, dt=0.001, total_time=10.0):
     """
-    Executes a single call of to a specified llm-model with given parameters and processes the response.
+    Score a hybrid automaton by simulating it and comparing to ground truth data.
+
+    Args:
+        ha_dict: Dictionary containing the hybrid automaton specification
+        ground_truth_state: Ground truth state trajectories (shape: num_states x num_steps)
+        ground_truth_input: Ground truth input trajectories (shape: num_inputs x num_steps)
+        dt: Time step for simulation
+        total_time: Total simulation time
+
+    Returns:
+        score: Negative mean squared error (higher is better, 0 is perfect)
+    """
+    try:
+        from Dainarx_code.src.HybridAutomata import HybridAutomata
+
+        # Create HA from dictionary
+        sys = HybridAutomata.from_json(ha_dict["automaton"])
+
+        # Get initial state from ground truth
+        init_state = ground_truth_state[:, :1].tolist()[0]
+        init_state = np.float64(init_state)
+
+        # Parse variable names from JSON
+        var_names = [v.strip() for v in ha_dict['automaton']['var'].split(',')]
+
+        # Convert init_state to dictionary with variable names as keys
+        init_state_dict = {'mode': 1}
+        if len(var_names) == 1:
+            # Single variable case
+            init_state_dict[var_names[0]] = init_state
+        else:
+            # Multiple variables case
+            for i, var_name in enumerate(var_names):
+                init_state_dict[var_name] = [init_state[i]] if i < len(init_state) else [0.0]
+
+        # Add input data
+        input_var_name = ha_dict['automaton']['input']
+        init_state_dict[input_var_name] = ground_truth_input
+
+        # Simulate the HA
+        state_data = []
+        sys.reset(init_state_dict, dt=dt)
+        now = 0.
+        max_steps = int(total_time / dt)
+
+        while now < total_time and len(state_data) < max_steps:
+            now += dt
+            state, mode, switched = sys.next(dt)
+            state_data.append(state)
+
+        # Convert to numpy array
+        state_data = np.transpose(np.array(state_data))
+
+        # Truncate to match ground truth length
+        min_len = min(state_data.shape[1], ground_truth_state.shape[1])
+        state_data = state_data[:, :min_len]
+        gt_truncated = ground_truth_state[:, :min_len]
+
+        # Calculate mean squared error
+        mse = np.mean((state_data - gt_truncated) ** 2)
+
+        # Return negative MSE (higher is better)
+        score = -mse
+        logger.debug(f"HA score: {score} (MSE: {mse})")
+        return score
+
+    except Exception as e:
+        logger.error(f"Error scoring HA: {e}")
+        # Return very low score on error
+        return -1e10
+
+def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano-2025-08-07-mini", function_list=None, system_prompt=None, max_retries=3, stats=None, imports=None, dt=0.001, total_time=10.0):
+    """
+    Executes a single call to a specified llm-model for hybrid automata extraction.
+
     Args:
         client: The openai client object used to interact with the llm.
         img: The base64 encoded image to use for the model.
-        state_data: The state data to use for the model.
-        input_data: The input data to use for the model.
+        state_data: The state data trajectories (shape: num_states x num_steps).
+        input_data: The input data trajectories (shape: num_inputs x num_steps).
         model (str, optional): The model identifier to be used. Defaults to "openai/gpt-5-nano-2025-08-07-mini".
-        function_list (list, optional): A list of functions to be included in the prompt. Defaults to None.
+        function_list (list, optional): A list of parent HA dictionaries to be included in the prompt. Defaults to None.
         system_prompt (str, optional): A system-level prompt to guide the model's behavior. Defaults to None.
         max_retries (int, optional): Maximum number of retries for parsing errors. Default is 3.
         stats (APICallStats, optional): Statistics tracking object. If None, a new one will be created.
         imports (list, optional): A list of import statements to include in the prompt. Defaults to ["import numpy as np"].
-        include_prompt_comments (bool, optional): When True, include inline comments in the generated prompt JSON.
+        dt (float, optional): Time step for simulation. Default is 0.001.
+        total_time (float, optional): Total simulation time. Default is 10.0.
+
     Returns:
         dict: A dictionary containing the following keys on success:
-            - "params": The parameters resulting from the curve fitting.
-            - "score": The score of the curve fitting.
-            - "ansatz": The ansatz extracted from the model's response.
-            - "Num_params": The number of parameters in the ansatz.
+            - "ha_dict": The hybrid automaton dictionary extracted from the model's response.
+            - "score": The score of the HA (negative MSE, higher is better).
             - "response": The raw response from the model.
             - "prompt": The prompt used in the model call.
-            - "function_list": The list of functions included in the prompt.
             - "stats": Statistics object (only if created locally).
-        
+
         If all attempts fail, it raises the last exception.
     """
     # logger.info(f"state_data: {state_data.shape}") #(1, 10001)
@@ -318,22 +391,24 @@ def single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano
                 response = None
                 continue
             
-            # plot and evaluate the ha_dict
+            # Score the ha_dict
             try:
-                logger.debug("Plotting and evaluating the ha_dict")
-                from Dainarx_code.HA_evaluation import ha_evaluation
-                ha_evaluation(ha_dict, 'duffing_ha_output', 0.001, 10)
-                stats.stage_success("ha_evaluation")
+                logger.debug("Scoring the ha_dict")
+                score = score_ha(ha_dict, state_data, input_data, dt=dt, total_time=total_time)
+                stats.stage_success("ha_scoring")
             except Exception as e:
-                stats.stage_failure("ha_evaluation", e)
+                stats.stage_failure("ha_scoring", e)
                 last_error = e
-                logger.debug(f"HA evaluation failed: {e}")
+                logger.debug(f"HA scoring failed: {e}")
+                # Use a very low score instead of failing completely
+                score = -1e10
                 continue
 
             # If we get here, everything worked
             stats.add_success()
             result = {
                 "ha_dict": ha_dict,
+                "score": score,
                 "response": response,
                 "prompt": prompt,
                 "stats": None if local_stats else stats  # Only include stats if we created them locally
@@ -530,6 +605,145 @@ async def async_single_call(client, img, x, y, model="openai/gpt-5-nano-2025-08-
     else:
         logger.error("Unknown error in async_single_call")
         raise RuntimeError("Unknown error in async_single_call")
+
+async def async_single_call_ha(client, img, state_data, input_data, model="openai/gpt-5-nano-2025-08-07-mini", function_list=None, system_prompt=None, max_retries=3, stats=None, imports=None, dt=0.001, total_time=10.0):
+    """
+    Asynchronous version of single_call_ha. Executes a single call to a specified llm-model for hybrid automata extraction.
+    This function is meant to be used with asyncio to allow for concurrent model calls.
+
+    Args:
+        client: The API client
+        img: Base64 encoded image
+        state_data: State data trajectories (shape: num_states x num_steps)
+        input_data: Input data trajectories (shape: num_inputs x num_steps)
+        model: Model name to use
+        function_list: Optional list of parent HA dictionaries
+        system_prompt: Optional system prompt
+        max_retries: Maximum number of retries for parsing/formatting errors
+        stats: Optional APICallStats object for tracking statistics
+        imports: A list of import statements to include in the prompt
+        dt: Time step for simulation
+        total_time: Total simulation time
+
+    Returns:
+        dict: Result dictionary or None if all attempts fail
+    """
+    logger.debug(f"Starting async_single_call_ha with model={model}, function_list size={len(function_list) if function_list else 0}")
+
+    # Create a local stats tracker if none provided
+    local_stats = stats is not None
+    if not local_stats:
+        from llmlex.response import APICallStats
+        stats = APICallStats()
+
+    retry_count = 0
+    last_error = None
+
+    while retry_count <= max_retries:
+        retry_count += 1
+        try:
+            # Get the proper prompt based on function_list
+            prompt = get_prompt_ha(state_data, input_data, imports=imports)
+
+            # TODO: Add support for including parent HAs in the prompt
+            # if function_list:
+            #     prompt = f"\n\nThe following hybrid automata are from previous attempts:\n{json.dumps(function_list, indent=2)}\n\n" + prompt
+
+            # Make the LLM call using our async rate-limited function
+            try:
+                from llmlex.llm import async_call_model
+                resp = await async_call_model(client, model, img, prompt, system_prompt)
+                stats.stage_success("api_call")
+            except Exception as e:
+                stats.stage_failure("api_call", e)
+                last_error = e
+                logger.error(f"API call failed: {e}")
+                continue
+
+            # Extract the HA dictionary from the response
+            logger.debug("Extracting HA dict from response")
+
+            # Process API response to get text content
+            try:
+                if isinstance(resp, str):
+                    response_text = resp
+                elif hasattr(resp, 'choices') and len(resp.choices) > 0:
+                    if hasattr(resp.choices[0], 'message') and hasattr(resp.choices[0].message, 'content'):
+                        response_text = resp.choices[0].message.content
+                    elif hasattr(resp.choices[0], 'text'):
+                        response_text = resp.choices[0].text
+                    else:
+                        raise ValueError("Response format not recognized: no content found in choices")
+                else:
+                    raise ValueError(f"Unexpected response format: {type(resp)}")
+            except Exception as e:
+                stats.stage_failure("api_call", e, "invalid_response")
+                last_error = e
+                logger.warning(f"Failed to process API response: {e}")
+                continue
+
+            # Extract HA dict and score
+            try:
+                # Try to extract a valid HA dict
+                try:
+                    ha_dict = extract_ha(response_text)
+                    stats.stage_success("ha_extraction")
+                except Exception as e:
+                    stats.stage_failure("ha_extraction", e)
+                    last_error = e
+                    logger.warning(f"HA extraction failed: {e}")
+                    continue
+
+                # Try to score the HA
+                try:
+                    score = score_ha(ha_dict, state_data, input_data, dt=dt, total_time=total_time)
+                    stats.stage_success("ha_scoring")
+                except Exception as e:
+                    stats.stage_failure("ha_scoring", e)
+                    last_error = e
+                    logger.warning(f"HA scoring failed: {e}")
+                    continue
+
+                # If we got here, everything worked
+                logger.debug(f"Scoring complete. Score: {score}")
+                stats.add_success()
+
+                # Create result dictionary
+                result = {
+                    "ha_dict": ha_dict,
+                    "score": score,
+                    "response": response_text,
+                    "prompt": prompt,
+                    "function_list": function_list,
+                    "stats": None if local_stats else stats
+                }
+
+                logger.debug("async_single_call_ha completed successfully")
+                return result
+
+            except Exception as e:
+                # This catch-all shouldn't be reached due to the inner try-except blocks
+                logger.error(f"Unexpected error in processing: {e}", exc_info=True)
+                last_error = e
+                stats.stage_failure("other", e)
+                continue
+
+        except Exception as e:
+            # Log any other errors that weren't caught by the inner try-except blocks
+            logger.error(f"Error in async_single_call_ha: {e}", exc_info=True)
+            last_error = e
+            stats.stage_failure("other", e)
+            continue
+
+    # If we've exhausted all retries
+    if last_error:
+        logger.error(f"All {max_retries} attempts failed in async_single_call_ha. Last error: {last_error}")
+        if not local_stats:
+            logger.info(f"Call statistics:\n{stats}")
+        raise last_error
+    else:
+        logger.error("Unknown error in async_single_call_ha")
+        raise RuntimeError("Unknown error in async_single_call_ha")
 
 def run_genetic(client, base64_image, x, y, population_size, num_of_generations,
                 temperature=1., model="openai/gpt-5-nano-2025-08-07-mini", exit_condition=1e-5, system_prompt=None, 
@@ -857,6 +1071,207 @@ def run_genetic(client, base64_image, x, y, population_size, num_of_generations,
     if api_stats.total_validation_issues() > 0:
         logger.info(f"Validation issues detected during genetic algorithm run, see summary.")
     
+    return populations
+
+def run_genetic_ha(client, base64_image, state_data, input_data, population_size, num_of_generations,
+                   temperature=1., model="openai/gpt-5-nano-2025-08-07-mini", system_prompt=None,
+                   use_async=True, dt=0.001, total_time=10.0, imports=None):
+    """
+    Run a genetic algorithm to discover hybrid automata from time-series data.
+
+    Parameters:
+        client (object): The client object to use for API calls.
+        base64_image (str): The base64 encoded image to use for the model.
+        state_data (array-like): The state data trajectories (shape: num_states x num_steps).
+        input_data (array-like): The input data trajectories (shape: num_inputs x num_steps).
+        population_size (int): The size of the population for the genetic algorithm.
+        num_of_generations (int): The number of generations to run the genetic algorithm.
+        temperature (float, optional): The temperature parameter for the selection process. Default is 1.
+        model (str, optional): The model to use for the API calls. Default is "openai/gpt-5-nano-2025-08-07-mini".
+        system_prompt (str, optional): The system prompt to use for the API calls. Default is None.
+        use_async (bool, optional): Whether to use async calls for population generation. Default is True.
+        dt (float, optional): Time step for simulation. Default is 0.001.
+        total_time (float, optional): Total simulation time. Default is 10.0.
+        imports (list, optional): A list of import statements to include in the prompt. Defaults to ["import numpy as np"].
+
+    Returns:
+        list: A list of populations, where each population is a list of individuals.
+              Each individual is a dict with keys: 'ha_dict', 'score', 'response', 'prompt'
+    """
+    clear_rate_limit_lock()
+
+    logger.debug(f"Starting genetic algorithm for HA with population_size={population_size}, generations={num_of_generations}, model={model}")
+    logger.debug(f"Parameters: temperature={temperature}, dt={dt}, total_time={total_time}")
+
+    # Initialize statistics tracker
+    api_stats = APICallStats()
+
+    population = []
+    populations = []
+
+    # Always use async mode
+    use_async = True
+    logger.info(f"Generating initial population asynchronously")
+
+    async def generate_population():
+        tasks = []
+        semaphore = asyncio.Semaphore(10)  # Limit concurrent requests to 10
+
+        async def create_individual():
+            nonlocal api_stats
+            async with semaphore:
+                max_attempts = 5
+                for attempt in range(max_attempts):
+                    try:
+                        # Calculate exponential backoff delay
+                        backoff_time = 0.1 * (2 ** attempt)
+
+                        logger.debug(f"Async: Generating individual, attempt {attempt+1}/{max_attempts}")
+                        result = await async_single_call_ha(
+                            client, base64_image, state_data, input_data, model=model,
+                            system_prompt=system_prompt, stats=api_stats, imports=imports,
+                            dt=dt, total_time=total_time
+                        )
+                        if result is not None:
+                            return result
+
+                        logger.warning(f"Async: Failed attempt {attempt+1}/{max_attempts}, waiting {backoff_time}s before retry")
+                        await asyncio.sleep(backoff_time)
+                    except Exception as e:
+                        api_stats.stage_failure("api_call", e)
+                        logger.error(f"Async: Error in attempt {attempt+1}/{max_attempts}: {e}")
+                        logger.warning(f"Async: Waiting {backoff_time}s before retry")
+                        await asyncio.sleep(backoff_time)
+
+                logger.error("Async: Failed to generate individual after 5 attempts with exponential backoff")
+                return None
+
+        for i in range(population_size):
+            tasks.append(create_individual())
+
+        # Wait for all tasks to complete
+        results = await asyncio.gather(*tasks)
+        return [r for r in results if r is not None]
+
+    # Use our helper function to safely execute the async code in any context
+    population = execute_async_in_loop(generate_population())
+
+    logger.info(f"Generated {len(population)} individuals")
+
+    # Check if we have a valid population
+    if not population:
+        error_msg = "Failed to generate any valid population members after multiple attempts"
+        logger.error(error_msg)
+        raise RuntimeError(error_msg)
+
+    # Handle NaN and infinite scores
+    non_finite_scores = [p for p in population if not np.isfinite(p['score'])]
+    if non_finite_scores:
+        finite_scores = [ind['score'] for ind in population if np.isfinite(ind['score'])]
+        if finite_scores:
+            min_score = min(finite_scores)
+            bad_score = 2 * min_score if min_score < 0 else min_score - abs(min_score)
+        else:
+            bad_score = -1e8
+
+        logger.info(f"Found {len(non_finite_scores)} non-finite scores, setting all to {bad_score}")
+
+        for p in non_finite_scores:
+            p['score'] = bad_score
+
+    population.sort(key=lambda x: x['score'])
+    populations.append(population)
+    best_pop = population[-1]
+    logger.info(f"Initial population best: score={best_pop['score']}")
+
+    # Evolution loop
+    for generation in range(num_of_generations-1):
+        logger.debug("Computing selection probabilities")
+        scores = np.array([ind['score'] for ind in population])
+        finite_scores = scores[np.isfinite(scores)]
+
+        # Handle case where all scores might be non-finite
+        if len(finite_scores) == 0:
+            logger.warning("No finite scores found, using uniform selection probabilities")
+            probs = np.ones(len(scores)) / len(scores)
+        else:
+            normalized_scores = (scores - np.min(finite_scores)) / (np.max(finite_scores) - np.min(finite_scores) + 1e-6)
+            normalized_scores = np.nan_to_num(normalized_scores, nan=0.0, posinf=0.0, neginf=0.0)
+
+            exp_scores = np.exp((normalized_scores - np.max(normalized_scores))/temperature)
+            exp_scores = np.nan_to_num(exp_scores, nan=0.0)
+
+            if np.sum(exp_scores) < 1e-10:
+                logger.warning("All selection probabilities are effectively zero, using uniform distribution")
+                probs = np.ones_like(exp_scores) / len(exp_scores)
+            else:
+                probs = exp_scores / np.sum(exp_scores)
+
+        logger.debug("Selecting parents for next generation")
+        selected_population = [np.random.choice(populations[-1], size=2,
+                                               p=probs, replace=True) for _ in range(population_size)]
+
+        # Create function lists with parent HA dictionaries
+        func_lists = [[pops[0]['ha_dict'], pops[1]['ha_dict']] for pops in selected_population]
+
+        population = []
+
+        if use_async:
+            logger.info(f"Generation {generation+1}/{num_of_generations-1}: Generating {population_size} new individuals")
+
+            async def generate_generation_population():
+                tasks = []
+                semaphore = asyncio.Semaphore(10)
+
+                async def create_individual(idx):
+                    nonlocal api_stats
+                    func_list = func_lists[idx]
+                    async with semaphore:
+                        for attempt in range(5):
+                            try:
+                                logger.debug(f"Async: Generation {generation+1}: Creating individual {idx+1}/{population_size}, attempt {attempt+1}")
+                                result = await async_single_call_ha(
+                                    client, base64_image, state_data, input_data, model=model,
+                                    function_list=func_list, system_prompt=system_prompt,
+                                    stats=api_stats, imports=imports, dt=dt, total_time=total_time
+                                )
+                                if result is not None:
+                                    return result
+                                logger.warning(f"Async: Generation {generation+1}: Failed attempt {attempt+1} for individual {idx+1}")
+                            except Exception as e:
+                                api_stats.stage_failure("api_call", e)
+                                logger.error(f"Async: Generation {generation+1}: Error in attempt {attempt+1} for individual {idx+1}: {e}")
+
+                        logger.error(f"Async: Generation {generation+1}: Failed to generate individual {idx+1} after 5 attempts")
+                        return None
+
+                for i in range(population_size):
+                    tasks.append(create_individual(i))
+
+                results = await asyncio.gather(*tasks)
+                return [r for r in results if r is not None]
+
+            # Use our helper function to safely execute the async code
+            gen_population = execute_async_in_loop(generate_generation_population())
+            population = gen_population
+
+        # Check if we have a valid population after this generation
+        if not population:
+            error_msg = f"Failed to generate any valid population members in generation {generation+1}"
+            logger.error(error_msg)
+            raise RuntimeError(error_msg)
+
+        population.sort(key=lambda x: x['score'])
+        best_pop = population[-1]
+        populations.append(population)
+
+        logger.info(f"Generation {generation+1} best: score={best_pop['score']}")
+
+    logger.info(f"Genetic algorithm for HA completed after {num_of_generations} generations")
+
+    # Print comprehensive statistics
+    print(f"\n{api_stats}")
+
     return populations
 
 def kan_to_symbolic(model, client, population=10, generations=3, temperature=0.1, gpt_model="openai/gpt-5-nano-2025-08-07-mini", exit_condition=1e-3, verbose=0, use_async=True, plot_fit=True, plot_parents=False, demonstrate_parent_plotting=False, constant_on_failure=False, disable_parse_warnings=False, imports=None):
