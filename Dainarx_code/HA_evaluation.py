@@ -74,7 +74,7 @@ def plot_ha(state_data: np.ndarray,
     # title_suffix = f" Sample {sample_index - 1}" if sample_index is not None else ""
     # ax_ts.set_title(f"{system_name} {title_suffix} - Time Series".strip())
     ax_ts.grid(True, linestyle='--', alpha=0.4)
-    ax_ts.legend(loc='best')
+    ax_ts.legend(loc='best',fontsize=16)
 
     # Save to file if requested
     if save_path is not None:
