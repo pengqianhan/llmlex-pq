@@ -121,7 +121,7 @@ def generate_base64_image_ha(state_data: np.ndarray,
             input_data=input_data,
             dt=dt,
             save_path=save_path,
-            input_plot=True,  # Always plot inputs to match generate_base64_image_ha behavior
+            input_plot=False,  # Always plot inputs to match generate_base64_image_ha behavior
             return_base64=True
         )
 
