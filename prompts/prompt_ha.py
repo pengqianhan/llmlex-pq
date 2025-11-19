@@ -3,7 +3,7 @@ prompt = """
 PROMPT_HA_v0 = {
     "automaton": {  # automaton
         "var": "x1",  # variables list, separated by ','
-        "input": "u1",  # input variables list, separated by ','
+        "input": "u1",  # input list, separated by ','
         "mode": [  # mode list
             {
                 "id": 1,  # mode id
@@ -33,8 +33,8 @@ PROMPT_HA_v0 = {
     "config": {  # configuration parameters
         "dt": 0.001,  # discrete time step
         "total_time": 10.0,  # total sampling time 
-        "dim": 1,  # dimension of differential equation 
-        "other_items": ""  # additional nonlinear or cross terms
+        "dim": 1,  # dimension of ODE in "eq" field 
+        "non_linear_items": ""  # additional nonlinear or cross terms in "eq" field
     }
 }
 
