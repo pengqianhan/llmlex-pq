@@ -10,6 +10,20 @@ Paper: https://arxiv.org/abs/2505.07956
 
 ## Core Architecture
 
+### Project Root Structure
+```
+/home/phan635/HybridAutomata/baseline_ha/llmlex-pq/
+├── llmlex/                 # Core SR library (importable package)
+├── Dainarx_code/           # Traditional HA learning (standalone pipeline)
+├── prompts/                # LLM prompts and HA format examples
+├── tests/                  # Pytest test suite
+├── Examples/               # Demo scripts and notebooks
+├── learningnotes/          # Development tutorials
+├── basic_usage.py          # Simple SR example
+├── basic_usage_ha.py       # Simple HA extraction example
+└── setup.py                # Package installation
+```
+
 ### Two Main Workflows
 
 1. **Symbolic Regression (llmlex/)**: LLM-based symbolic regression for mathematical expressions
@@ -182,12 +196,18 @@ print(f"HA dict: {result_ha['ha_dict']}")
 ```
 
 ### Traditional HA Learning
-```python
-# Navigate to Dainarx_code directory
+```bash
+# Navigate to Dainarx_code directory from project root
 cd Dainarx_code
+python main.py
+```
 
-# Run the pipeline on a JSON specification
+Or programmatically:
+```python
+import sys
+sys.path.append('Dainarx_code')
 from main import main
+
 sys, slice_data = main(
     json_path='automata/example.json',
     data_path='data',
@@ -230,15 +250,18 @@ python tests/run_tests.py --pytest-args "tests/test_fit.py -v"
 
 ### Running Examples
 ```bash
+# From project root (/home/phan635/HybridAutomata/baseline_ha/llmlex-pq/):
+
 # Basic symbolic regression
 python basic_usage.py
 
 # Hybrid automata extraction (LLM-based)
 python basic_usage_ha.py
 
-# Traditional HA learning
+# Traditional HA learning (navigate to subdirectory first)
 cd Dainarx_code
 python main.py
+# Return to root with: cd ..
 ```
 
 ### Data Generation
@@ -322,13 +345,13 @@ The standard HA representation (see `Dainarx_code/automata/json_readme.md` and `
   "config": {
     "dt": 0.01,                # Discrete time step
     "total_time": 10.0,        # Total simulation time
-    "order": 3,                # Differential equation order (for traditional learning)
+    "order": 3,                # Differential equation order (dimension for traditional learning)
     "window_size": 10,         # Sliding window size for change-point detection
-    "clustering_method": "fit", # Clustering method: "fit" or "dis"
+    "clustering_method": "fit", # Clustering method: "fit" (fitting-based) or "dis" (distance-based)
     "minus": false,            # Minimize order in traditional learning
     "need_bias": true,         # Include constant term in fits
-    "kernel": "linear",        # SVM kernel for guard learning
-    "other_items": ""          # Additional nonlinear/cross terms
+    "kernel": "linear",        # SVM kernel for guard learning ("linear", "rbf", "poly", etc.)
+    "other_items": ""          # Additional nonlinear/cross terms (see json_readme.md for syntax)
   }
 }
 ```
@@ -379,9 +402,34 @@ The genetic algorithm (`run_genetic`, `run_genetic_ha`) returns nested lists:
 6. **Data Paths**: `Dainarx_code/main.py` expects data in `data/` relative to script location; adjust paths if running from elsewhere
 7. **Test Fixture Generation**: Run `python tests/run_tests.py` instead of calling pytest directly to ensure fixtures are regenerated
 
+## Git Workflow
+
+### Branch Structure
+- `main`: Main development branch
+- `llm_ha_image`: Current working branch for HA image-based extraction features
+
+### Typical Workflow
+```bash
+# Check current status
+git status
+
+# Create feature branch from main
+git checkout main
+git pull
+git checkout -b feature-name
+
+# After changes, commit with descriptive messages
+git add <files>
+git commit -m "Add feature: brief description"
+
+# Push and create PR to main
+git push -u origin feature-name
+```
+
 ## Related Files
 
 - **AGENTS.md**: Repository guidelines (project structure, commit conventions, testing practices)
 - **researchideas.md**: Research notes on methods and experiments
-- **Dainarx_code/automata/json_readme.md**: HA JSON format specification
+- **Dainarx_code/automata/json_readme.md**: HA JSON format specification (with Chinese comments)
 - **prompts/system_prompt.md**: LLM system prompt for HA extraction
+- **prompts/dict2json.py**: Reference examples for HA JSON format conversion
