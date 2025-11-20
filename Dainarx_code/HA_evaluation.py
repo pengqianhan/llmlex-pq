@@ -1,69 +1,808 @@
+"""
+Hybrid Automaton Evaluation Module
+
+This module provides classes and functions for evaluating hybrid automata against ground truth data.
+It supports simulation, metric computation, and visualization with multiple plotting modes.
+"""
+
 import numpy as np
 import os
+import sys
 from math import *
 import matplotlib.pyplot as plt
-from typing import Optional
-from Dainarx_code.src.HybridAutomata import HybridAutomata
+from typing import Optional, Dict, List, Tuple, Any
 import json
 import base64
 import io
 
-def _plot_trajectory_on_axis(ax, state_data, input_data, dt, title, input_plot, cmap):
-    """Helper function to plot trajectory on a given axis.
+# Handle both package and direct script execution
+# Add Dainarx_code directory to sys.path to ensure src modules can be imported
+_current_dir = os.path.dirname(os.path.abspath(__file__))
+_dainarx_code_dir = _current_dir if os.path.basename(_current_dir) == 'Dainarx_code' else os.path.join(os.path.dirname(_current_dir), 'Dainarx_code')
 
-    Args:
-        ax: Matplotlib axis to plot on
-        state_data: 2D array with shape (num_states, num_steps)
-        input_data: Input data array (processed)
-        dt: Time step size
-        title: Title for the subplot
-        input_plot: Whether to plot input data
-        cmap: Colormap for plotting
+# Ensure Dainarx_code is in path so that "from src.X import Y" works
+if os.path.exists(_dainarx_code_dir) and _dainarx_code_dir not in sys.path:
+    sys.path.insert(0, _dainarx_code_dir)
+
+# Now import from src directly (this will work because Dainarx_code is in sys.path)
+from src.HybridAutomata import HybridAutomata
+from src.Evaluation import Evaluation, max_min_abs_diff
+
+
+# ============================================================================
+# Constants
+# ============================================================================
+DEFAULT_TIME_STEP = 0.001
+DEFAULT_FIGURE_WIDTH = 12
+DEFAULT_FIGURE_HEIGHT = 5
+DEFAULT_STACKED_HEIGHT = 10
+DEFAULT_DPI = 150
+DEFAULT_BASE64_DPI = 100
+DEFAULT_LINEWIDTH = 2.0
+DEFAULT_LINEWIDTH_THICK = 3.5
+DEFAULT_LINEWIDTH_THIN = 2.0
+DEFAULT_MARKER_SIZE = 6
+DEFAULT_MARKER_SIZE_SMALL = 5
+DEFAULT_MARKER_INTERVAL = 40  # Show ~40 markers per plot
+DEFAULT_FONT_SIZE = 14
+DEFAULT_LEGEND_FONT_SIZE = 16
+DEFAULT_TITLE_FONT_SIZE = 16
+
+
+# ============================================================================
+# TrajectoryPlotter Class
+# ============================================================================
+class TrajectoryPlotter:
     """
-    num_states, num_steps = state_data.shape
-    time = np.arange(num_steps) * dt
+    Handles plotting of hybrid automaton trajectories with multiple visualization modes.
 
-    # Process input data
-    if input_data.size == 0:
-        input_series = np.empty((0, num_steps))
-    elif input_data.ndim == 1:
-        input_series = input_data.reshape(1, -1)
-    elif input_data.ndim == 2:
-        input_series = input_data
-    else:
-        raise ValueError("input_data must be empty, 1D, or 2D array")
+    Supports three plotting modes:
+    - 'single': Plot simulated trajectory only
+    - 'side_by_side': Overlay original and simulated trajectories on the same axes
+    - 'stacked': Vertically stack original and simulated trajectories in separate subplots
+    """
 
-    num_inputs = input_series.shape[0]
+    def __init__(self,
+                 state_data: np.ndarray,
+                 input_data: np.ndarray,
+                 dt: float = DEFAULT_TIME_STEP,
+                 original_state_data: Optional[np.ndarray] = None,
+                 original_input_data: Optional[np.ndarray] = None,
+                 input_plot: bool = False):
+        """
+        Initialize the trajectory plotter.
 
-    # Plot states
-    for idx in range(num_states):
-        ax.plot(time, state_data[idx], label=f"x{idx + 1}", color=cmap(idx), linewidth=2)
+        Args:
+            state_data: Simulated state data, shape (num_states, num_steps)
+            input_data: Simulated input data (empty, 1D, or 2D array)
+            dt: Time step size
+            original_state_data: Optional ground truth state data
+            original_input_data: Optional ground truth input data
+            input_plot: Whether to include input data in plots
 
-    # Plot inputs if requested
-    if input_plot:
-        for idx in range(num_inputs):
-            series_index = num_states + idx
-            ax.plot(time, input_series[idx], label=f"u{idx + 1}", linestyle='--',
-                   color=cmap(series_index), linewidth=2)
+        Raises:
+            ValueError: If data dimensions are invalid
+        """
+        # Validate and store state data
+        if state_data.ndim != 2:
+            raise ValueError("state_data must be a 2D array with shape (num_states, num_steps)")
 
-    ax.set_xlabel('Time (s)')
-    ax.set_ylabel('Values')
-    ax.set_title(title)
-    ax.grid(True, linestyle='--', alpha=0.4)
-    ax.legend(loc='best', fontsize=16)
+        self.state_data = state_data
+        self.num_states, self.num_steps = state_data.shape
+
+        if self.num_steps == 0:
+            raise ValueError("state_data must contain at least one time step")
+
+        # Process and validate input data
+        self.input_data = self._process_input_data(input_data, self.num_steps)
+        self.num_inputs = self.input_data.shape[0]
+
+        # Store configuration
+        self.dt = dt
+        self.original_state_data = original_state_data
+        self.original_input_data = self._process_input_data(original_input_data, self.num_steps) if original_input_data is not None else None
+        self.input_plot = input_plot
+
+        # Create time array and colormap
+        self.time = np.arange(self.num_steps) * dt
+        self.cmap = self._get_colormap()
+
+        # Initialize figure
+        self.fig = None
+        self.axes = None
+
+    @staticmethod
+    def _process_input_data(input_data: np.ndarray, expected_steps: int) -> np.ndarray:
+        """
+        Process input data into consistent 2D format.
+
+        Args:
+            input_data: Input data (empty, 1D, or 2D array)
+            expected_steps: Expected number of time steps
+
+        Returns:
+            Processed input data with shape (num_inputs, num_steps)
+
+        Raises:
+            ValueError: If input data has invalid dimensions
+        """
+        if input_data is None or input_data.size == 0:
+            return np.empty((0, expected_steps))
+        elif input_data.ndim == 1:
+            return input_data.reshape(1, -1)
+        elif input_data.ndim == 2:
+            return input_data
+        else:
+            raise ValueError("input_data must be empty, 1D, or 2D array")
+
+    def _get_colormap(self):
+        """
+        Get colormap for plotting multiple series.
+
+        Returns:
+            Colormap object
+        """
+        total_series = self.num_states + self.num_inputs
+        try:
+            return plt.cm.get_cmap('tab20', max(total_series, 1))
+        except (AttributeError, TypeError):
+            # For matplotlib >= 3.7
+            import matplotlib as mpl
+            return mpl.colormaps['tab20']
+
+    def _plot_trajectory_on_axis(self,
+                                  ax,
+                                  state_data: np.ndarray,
+                                  input_data: np.ndarray,
+                                  title: str):
+        """
+        Plot a single trajectory on the given axis.
+
+        Args:
+            ax: Matplotlib axis object
+            state_data: State data to plot, shape (num_states, num_steps)
+            input_data: Input data to plot (preprocessed)
+            title: Title for the subplot
+        """
+        num_states = state_data.shape[0]
+        num_inputs = input_data.shape[0]
+
+        # Plot state variables
+        for idx in range(num_states):
+            ax.plot(self.time, state_data[idx],
+                   label=f"x{idx + 1}",
+                   color=self.cmap(idx),
+                   linewidth=DEFAULT_LINEWIDTH)
+
+        # Plot input variables if requested
+        if self.input_plot and num_inputs > 0:
+            for idx in range(num_inputs):
+                series_index = num_states + idx
+                ax.plot(self.time, input_data[idx],
+                       label=f"u{idx + 1}",
+                       linestyle='--',
+                       color=self.cmap(series_index),
+                       linewidth=DEFAULT_LINEWIDTH)
+
+        # Configure axis
+        ax.set_xlabel('Time (s)')
+        ax.set_ylabel('Values')
+        ax.set_title(title)
+        ax.grid(True, linestyle='--', alpha=0.4)
+        ax.legend(loc='best', fontsize=DEFAULT_LEGEND_FONT_SIZE)
+
+    def plot_single(self) -> plt.Figure:
+        """
+        Plot simulated trajectory only.
+
+        Returns:
+            Matplotlib figure object
+        """
+        self.fig, ax = plt.subplots(1, 1,
+                                     figsize=(DEFAULT_FIGURE_WIDTH, DEFAULT_FIGURE_HEIGHT),
+                                     constrained_layout=True)
+        self._plot_trajectory_on_axis(ax, self.state_data, self.input_data,
+                                      "Simulated Trajectory")
+        self.axes = ax
+        return self.fig
+
+    def plot_side_by_side(self) -> plt.Figure:
+        """
+        Plot original and simulated trajectories overlaid on the same axes.
+
+        Original data is shown with thick solid lines and circle markers.
+        Simulated data is shown with thin dash-dot lines and triangle markers.
+
+        Returns:
+            Matplotlib figure object
+
+        Raises:
+            ValueError: If original_state_data is not provided
+        """
+        if self.original_state_data is None:
+            raise ValueError("original_state_data must be provided for side_by_side mode")
+
+        self.fig, ax = plt.subplots(1, 1,
+                                     figsize=(DEFAULT_FIGURE_WIDTH, DEFAULT_FIGURE_HEIGHT),
+                                     constrained_layout=True)
+
+        num_orig_states = self.original_state_data.shape[0]
+        marker_interval = max(1, self.num_steps // DEFAULT_MARKER_INTERVAL)
+
+        # Plot original state data (thick solid lines with circle markers)
+        for idx in range(num_orig_states):
+            ax.plot(self.time, self.original_state_data[idx],
+                   label=f"x{idx + 1} (Original)",
+                   color=self.cmap(idx),
+                   linewidth=DEFAULT_LINEWIDTH_THICK,
+                   linestyle='-',
+                   marker='o',
+                   markersize=DEFAULT_MARKER_SIZE,
+                   markevery=marker_interval,
+                   alpha=0.6,
+                   zorder=1)  # Draw behind simulated data
+
+        # Plot simulated state data (thin dash-dot lines with triangle markers)
+        for idx in range(self.num_states):
+            ax.plot(self.time, self.state_data[idx],
+                   label=f"x{idx + 1} (Simulated)",
+                   color=self.cmap(idx),
+                   linewidth=DEFAULT_LINEWIDTH_THIN,
+                   linestyle='-.',
+                   marker='^',
+                   markersize=DEFAULT_MARKER_SIZE_SMALL,
+                   markevery=marker_interval,
+                   alpha=1.0,
+                   zorder=2)  # Draw on top
+
+        # Plot input data if requested
+        if self.input_plot:
+            self._plot_inputs_comparison(ax, marker_interval)
+
+        # Configure axis
+        ax.set_xlabel('Time (s)', fontsize=DEFAULT_FONT_SIZE)
+        ax.set_ylabel('Values', fontsize=DEFAULT_FONT_SIZE)
+        ax.set_title('Comparison: Original vs Simulated Trajectories',
+                    fontsize=DEFAULT_TITLE_FONT_SIZE, fontweight='bold')
+        ax.grid(True, linestyle='--', alpha=0.4)
+        ax.legend(loc='best', fontsize=12, ncol=2)
+
+        self.axes = ax
+        return self.fig
+
+    def _plot_inputs_comparison(self, ax, marker_interval: int):
+        """
+        Helper method to plot input comparisons on side-by-side plot.
+
+        Args:
+            ax: Matplotlib axis object
+            marker_interval: Interval for showing markers
+        """
+        # Plot original input data
+        if self.original_input_data is not None and self.original_input_data.shape[0] > 0:
+            for idx in range(self.original_input_data.shape[0]):
+                series_index = self.num_states + idx
+                ax.plot(self.time, self.original_input_data[idx],
+                       label=f"u{idx + 1} (Original)",
+                       linestyle='-',
+                       color=self.cmap(series_index),
+                       linewidth=DEFAULT_LINEWIDTH_THICK,
+                       marker='o',
+                       markersize=DEFAULT_MARKER_SIZE,
+                       markevery=marker_interval,
+                       alpha=0.6,
+                       zorder=1)
+
+        # Plot simulated input data
+        if self.num_inputs > 0:
+            for idx in range(self.num_inputs):
+                series_index = self.num_states + idx
+                ax.plot(self.time, self.input_data[idx],
+                       label=f"u{idx + 1} (Simulated)",
+                       linestyle='-.',
+                       color=self.cmap(series_index),
+                       linewidth=DEFAULT_LINEWIDTH_THIN,
+                       marker='^',
+                       markersize=DEFAULT_MARKER_SIZE_SMALL,
+                       markevery=marker_interval,
+                       alpha=1.0,
+                       zorder=2)
+
+    def plot_stacked(self) -> plt.Figure:
+        """
+        Plot original and simulated trajectories in vertically stacked subplots.
+
+        Top subplot: Simulated trajectory
+        Bottom subplot: Original trajectory
+
+        Returns:
+            Matplotlib figure object
+
+        Raises:
+            ValueError: If original_state_data is not provided
+        """
+        if self.original_state_data is None:
+            raise ValueError("original_state_data must be provided for stacked mode")
+
+        self.fig, (ax_top, ax_bottom) = plt.subplots(
+            2, 1,
+            figsize=(DEFAULT_FIGURE_WIDTH, DEFAULT_STACKED_HEIGHT),
+            constrained_layout=True,
+            sharex=True
+        )
+
+        # Top: Simulated trajectory
+        self._plot_trajectory_on_axis(ax_top, self.state_data, self.input_data,
+                                      "Simulated Trajectory")
+
+        # Bottom: Original trajectory
+        original_input = self.original_input_data if self.original_input_data is not None else np.array([])
+        self._plot_trajectory_on_axis(ax_bottom, self.original_state_data, original_input,
+                                      "Original Trajectory")
+
+        self.axes = (ax_top, ax_bottom)
+        return self.fig
+
+    def plot(self, mode: str = "single") -> plt.Figure:
+        """
+        Generate plot based on specified mode.
+
+        Args:
+            mode: Plotting mode - "single", "side_by_side", or "stacked"
+
+        Returns:
+            Matplotlib figure object
+
+        Raises:
+            ValueError: If mode is invalid
+        """
+        if mode == "single":
+            return self.plot_single()
+        elif mode == "side_by_side":
+            return self.plot_side_by_side()
+        elif mode == "stacked":
+            return self.plot_stacked()
+        else:
+            raise ValueError(f"Invalid plot mode: {mode}. Must be 'single', 'side_by_side', or 'stacked'")
+
+    def save(self, save_path: str, dpi: int = DEFAULT_DPI):
+        """
+        Save the current figure to file.
+
+        Args:
+            save_path: Path to save the figure
+            dpi: Resolution in dots per inch
+        """
+        if self.fig is None:
+            raise RuntimeError("No figure to save. Call plot() first.")
+
+        directory = os.path.dirname(save_path)
+        if directory:
+            os.makedirs(directory, exist_ok=True)
+
+        self.fig.savefig(save_path, dpi=dpi)
+
+    def to_base64(self, dpi: int = DEFAULT_BASE64_DPI) -> str:
+        """
+        Convert the current figure to base64-encoded PNG string.
+
+        Args:
+            dpi: Resolution in dots per inch
+
+        Returns:
+            Base64-encoded PNG image string
+        """
+        if self.fig is None:
+            raise RuntimeError("No figure to convert. Call plot() first.")
+
+        buffer = io.BytesIO()
+        self.fig.savefig(buffer, format='png', dpi=dpi)
+        buffer.seek(0)
+        base64_image = base64.b64encode(buffer.getvalue()).decode("utf-8")
+        buffer.close()
+
+        return base64_image
+
+    def close(self):
+        """Close the figure to free memory."""
+        if self.fig is not None:
+            plt.close(self.fig)
+            self.fig = None
+            self.axes = None
 
 
-def plot_ha(state_data: np.ndarray,
-             input_data: np.ndarray,
-             dt: float=0.001, # default time step
+# ============================================================================
+# HAEvaluator Class
+# ============================================================================
+class HAEvaluator:
+    """
+    Evaluates a hybrid automaton against ground truth data.
+
+    This class handles:
+    - Loading ground truth data from NPZ files
+    - Simulating hybrid automaton dynamics
+    - Computing evaluation metrics (absolute and normalized errors)
+    - Generating comparison visualizations
+    """
+
+    def __init__(self,
+                 ha_dict: Dict[str, Any],
+                 npz_file_path: str,
+                 dt: Optional[float] = None,
+                 total_time: float = 10.0):
+        """
+        Initialize the evaluator.
+
+        Args:
+            ha_dict: Dictionary containing 'automaton' and 'config' keys
+            npz_file_path: Path to NPZ file with ground truth data
+            dt: Time step (if None, uses value from ha_dict['config']['dt'])
+            total_time: Total simulation time in seconds
+        """
+        self.ha_dict = ha_dict
+        self.npz_file_path = npz_file_path
+        self.total_time = total_time
+
+        # Extract time step from config or use provided value
+        self.dt = dt if dt is not None else ha_dict['config']['dt']
+
+        # Initialize storage for results
+        self.ground_truth = None
+        self.simulation_results = None
+        self.metrics = None
+
+        # Create hybrid automaton from JSON specification
+        self.ha_system = HybridAutomata.from_json(ha_dict["automaton"])
+
+    def load_ground_truth(self) -> Dict[str, np.ndarray]:
+        """
+        Load ground truth data from NPZ file.
+
+        Returns:
+            Dictionary containing 'state', 'input', 'mode', 'change_points'
+        """
+        npz_file = np.load(self.npz_file_path)
+
+        self.ground_truth = {
+            'state': npz_file['state'],
+            'input': npz_file['input'],
+            'mode': npz_file['mode'] if 'mode' in npz_file else None,
+            'change_points': npz_file['change_points'].tolist() if 'change_points' in npz_file else None
+        }
+
+        return self.ground_truth
+
+    def _prepare_initial_state(self) -> Dict[str, Any]:
+        """
+        Prepare initial state dictionary for simulation.
+
+        Returns:
+            Initial state dictionary with mode, state variables, and input
+        """
+        if self.ground_truth is None:
+            self.load_ground_truth()
+
+        state_data_npz = self.ground_truth['state']
+        input_data_npz = self.ground_truth['input']
+
+        # Extract initial state from first column
+        init_state = state_data_npz[:, 0].tolist()  # Convert to list to handle both single and multiple variables
+        if not isinstance(init_state, list):
+            init_state = [init_state]
+
+        # Parse variable names from automaton specification
+        var_names = [v.strip() for v in self.ha_dict['automaton']['var'].split(',')]
+
+        # Build initial state dictionary
+        init_state_dict = {'mode': 1}
+
+        if len(var_names) == 1:
+            # Single variable case (e.g., "x")
+            init_state_dict[var_names[0]] = init_state
+        else:
+            # Multiple variables case (e.g., "x1, x2, x3, x4")
+            for i, var_name in enumerate(var_names):
+                init_state_dict[var_name] = [init_state[i]] if i < len(init_state) else [0.0]
+
+        # Add input data (use full time series, not function expression)
+        input_var_name = self.ha_dict['automaton']['input']
+        init_state_dict[input_var_name] = input_data_npz
+
+        return init_state_dict
+
+    def simulate(self) -> Dict[str, np.ndarray]:
+        """
+        Run hybrid automaton simulation.
+
+        Returns:
+            Dictionary containing 'state', 'input', 'mode', 'change_points'
+        """
+        # Prepare initial state
+        init_state_dict = self._prepare_initial_state()
+
+        # Initialize simulation
+        state_data = []
+        mode_data = []
+        input_data = []
+        change_points = [0]
+
+        self.ha_system.reset(init_state_dict, dt=self.dt)
+
+        # Run simulation
+        current_time = 0.0
+        time_step_idx = 0
+
+        while current_time < self.total_time:
+            current_time += self.dt
+            time_step_idx += 1
+
+            state, mode, switched = self.ha_system.next(self.dt)
+
+            state_data.append(state)
+            mode_data.append(mode)
+            input_data.append(self.ha_system.getInput())
+
+            if switched:
+                change_points.append(time_step_idx)
+
+        # Mark end of simulation as final change point
+        change_points.append(time_step_idx)
+
+        # Convert to numpy arrays and transpose to (num_variables, num_steps) format
+        self.simulation_results = {
+            'state': np.transpose(np.array(state_data)),
+            'input': np.transpose(np.array(input_data)),
+            'mode': np.array(mode_data),
+            'change_points': change_points
+        }
+
+        return self.simulation_results
+
+    def compute_metrics(self) -> Dict[str, Any]:
+        """
+        Compute comprehensive evaluation metrics.
+
+        Computes both absolute error metrics (for interpretability) and
+        normalized metrics (for comparison with traditional HA learning).
+
+        Returns:
+            Dictionary containing all computed metrics
+        """
+        if self.ground_truth is None:
+            self.load_ground_truth()
+
+        if self.simulation_results is None:
+            self.simulate()
+
+        # Extract data
+        sim_state = self.simulation_results['state']
+        sim_mode = self.simulation_results['mode']
+        sim_change_points = self.simulation_results['change_points']
+        sim_input = self.simulation_results['input']
+
+        gt_state = self.ground_truth['state']
+        gt_mode = self.ground_truth['mode']
+        gt_change_points = self.ground_truth['change_points']
+        gt_input = self.ground_truth['input']
+
+        # Truncate to shorter length for fair comparison
+        min_len = min(sim_state.shape[1], gt_state.shape[1])
+        sim_state_truncated = sim_state[:, :min_len]
+        gt_state_truncated = gt_state[:, :min_len]
+
+        # Check dimension compatibility
+        use_evaluation_class = (sim_state_truncated.shape[0] == gt_state_truncated.shape[0])
+
+        # ========== Normalized metrics using Evaluation class ==========
+        if use_evaluation_class:
+            evaluator = Evaluation(name="HA_Single_Trajectory_Evaluation")
+
+            evaluator.submit(
+                fit_mode=[sim_mode[:min_len]],
+                fit_data=[sim_state_truncated],
+                gt_mode=[gt_mode[:min_len]] if gt_mode is not None else [[1] * min_len],
+                gt_data=[gt_state_truncated],
+                chp=[sim_change_points],
+                gt_chp=[gt_change_points] if gt_change_points is not None else [[0, min_len]],
+                mode_num=len(set(sim_mode)),
+                gt_mode_num=len(set(gt_mode)) if gt_mode is not None else 1,
+                dt=self.dt
+            )
+
+            eval_results = evaluator.calc()
+        else:
+            # Dimension mismatch - compute limited metrics manually
+            print(f"Warning: State dimension mismatch (simulated: {sim_state_truncated.shape[0]}, "
+                  f"ground truth: {gt_state_truncated.shape[0]})")
+            print(f"         Evaluation class metrics will not be computed.")
+
+            # Compute change-point error manually
+            if gt_change_points is not None and gt_mode is not None:
+                chp_error_1 = max_min_abs_diff(sim_change_points, gt_change_points)
+                chp_error_2 = max_min_abs_diff(gt_change_points, sim_change_points)
+                tc_error = max(chp_error_1, chp_error_2) * self.dt
+            else:
+                tc_error = None
+
+            eval_results = {
+                'tc': tc_error,
+                'train_tc': 0.0,
+                'max_diff': None,
+                'mean_diff': None,
+                'clustering_error': abs(len(set(sim_mode)) - (len(set(gt_mode)) if gt_mode is not None else 1))
+            }
+
+        # ========== Absolute error metrics ==========
+        if use_evaluation_class:
+            diff_abs = sim_state_truncated - gt_state_truncated
+            state_rmse = np.sqrt(np.mean(diff_abs**2))
+            state_max_error = np.max(np.abs(diff_abs))
+            state_mae = np.mean(np.abs(diff_abs))
+        else:
+            # For dimension mismatch, only compare common dimensions
+            min_dims = min(sim_state_truncated.shape[0], gt_state_truncated.shape[0])
+            diff_abs = sim_state_truncated[:min_dims, :] - gt_state_truncated[:min_dims, :]
+            state_rmse = np.sqrt(np.mean(diff_abs**2))
+            state_max_error = np.max(np.abs(diff_abs))
+            state_mae = np.mean(np.abs(diff_abs))
+            print(f"         Note: Error metrics computed only for first {min_dims} state variable(s).")
+
+        # Mode tracking accuracy
+        mode_accuracy = None
+        if gt_mode is not None:
+            min_mode_len = min(len(sim_mode), len(gt_mode))
+            mode_matches = np.sum(sim_mode[:min_mode_len] == gt_mode[:min_mode_len])
+            mode_accuracy = mode_matches / min_mode_len
+
+        # Change-point error (stored in 'tc' from Evaluation class)
+        change_point_error = eval_results['tc']
+
+        # Input tracking error
+        min_input_len = min(sim_input.shape[1], gt_input.shape[1])
+        input_diff = sim_input[:, :min_input_len] - gt_input[:, :min_input_len]
+        input_mse = np.mean(input_diff**2)
+
+        # Assemble comprehensive results
+        self.metrics = {
+            # === Absolute error metrics (for interpretability) ===
+            'state_rmse': float(state_rmse),
+            'state_max_error': float(state_max_error),
+            'state_mae': float(state_mae),
+            'mode_accuracy': float(mode_accuracy) if mode_accuracy is not None else None,
+            'change_point_error': float(change_point_error) if change_point_error is not None else None,
+            'input_mse': float(input_mse),
+
+            # === Normalized metrics from Evaluation class ===
+            'normalized_max_diff': float(eval_results['max_diff']) if eval_results['max_diff'] is not None else None,
+            'normalized_mean_diff': float(eval_results['mean_diff']) if eval_results['mean_diff'] is not None else None,
+            'train_tc': float(eval_results['train_tc']),
+            'clustering_error': int(eval_results['clustering_error']),
+
+            # === Data for further analysis ===
+            'simulated_data': self.simulation_results,
+            'ground_truth_data': self.ground_truth
+        }
+
+        return self.metrics
+
+    def plot(self,
+             plot_mode: str = "single",
              save_path: Optional[str] = None,
              input_plot: bool = False,
-             return_base64: bool = False,
-             plot_mode: str = "single",
-             original_state_data: Optional[np.ndarray] = None,
-             original_input_data: Optional[np.ndarray] = None,
-             **kwargs) -> Optional[str]:
-    """Plot the time series for states/inputs.
+             return_base64: bool = False) -> Optional[str]:
+        """
+        Generate visualization of trajectories.
+
+        Args:
+            plot_mode: Plotting mode - "single", "side_by_side", or "stacked"
+            save_path: Path to save the figure (optional)
+            input_plot: Whether to include input plots
+            return_base64: If True, return base64-encoded PNG
+
+        Returns:
+            Base64-encoded PNG string if return_base64=True, otherwise None
+        """
+        if self.ground_truth is None:
+            self.load_ground_truth()
+
+        if self.simulation_results is None:
+            self.simulate()
+
+        # Create plotter
+        plotter = TrajectoryPlotter(
+            state_data=self.simulation_results['state'],
+            input_data=self.simulation_results['input'],
+            dt=self.dt,
+            original_state_data=self.ground_truth['state'],
+            original_input_data=self.ground_truth['input'],
+            input_plot=input_plot
+        )
+
+        # Generate plot
+        plotter.plot(mode=plot_mode)
+
+        # Save if requested
+        if save_path is not None:
+            plotter.save(save_path)
+
+        # Convert to base64 if requested
+        result = None
+        if return_base64:
+            result = plotter.to_base64()
+
+        # Clean up
+        plotter.close()
+
+        return result
+
+    def evaluate(self,
+                 save_path: Optional[str] = None,
+                 plot_mode: str = "single",
+                 compute_metrics: bool = True,
+                 return_results: bool = True) -> Optional[Dict[str, Any]]:
+        """
+        Run complete evaluation pipeline.
+
+        This is the main entry point that orchestrates:
+        1. Loading ground truth data
+        2. Running simulation
+        3. Computing metrics (if requested)
+        4. Generating plots (if save_path provided)
+
+        Args:
+            save_path: Directory path to save plots (optional)
+            plot_mode: Plotting mode - "single", "side_by_side", or "stacked"
+            compute_metrics: Whether to compute error metrics
+            return_results: Whether to return results dictionary
+
+        Returns:
+            Dictionary with evaluation metrics if return_results=True, otherwise None
+        """
+        # Load ground truth
+        self.load_ground_truth()
+
+        # Run simulation
+        self.simulate()
+
+        # Compute metrics if requested
+        if compute_metrics:
+            self.compute_metrics()
+
+        # Generate plot if save path provided
+        if save_path is not None:
+            mode_suffix_map = {
+                "single": "single",
+                "side_by_side": "side_by_side",
+                "stacked": "stacked"
+            }
+            filename = f"output_{mode_suffix_map.get(plot_mode, 'single')}.png"
+            figure_path = os.path.join(save_path, filename)
+
+            self.plot(plot_mode=plot_mode, save_path=figure_path)
+
+        # Return results if requested
+        if return_results and self.metrics is not None:
+            return self.metrics
+        else:
+            return None
+
+
+# ============================================================================
+# Backward-Compatible Wrapper Functions
+# ============================================================================
+
+def plot_ha(state_data: np.ndarray,
+            input_data: np.ndarray,
+            dt: float = DEFAULT_TIME_STEP,
+            save_path: Optional[str] = None,
+            input_plot: bool = False,
+            return_base64: bool = False,
+            plot_mode: str = "single",
+            original_state_data: Optional[np.ndarray] = None,
+            original_input_data: Optional[np.ndarray] = None,
+            **kwargs) -> Optional[str]:
+    """
+    Plot the time series for states/inputs (backward-compatible wrapper).
 
     Args:
         state_data: 2D array with shape (num_states, num_steps) - simulated data
@@ -75,293 +814,170 @@ def plot_ha(state_data: np.ndarray,
         plot_mode: Plotting mode - "single", "side_by_side", or "stacked"
         original_state_data: Optional original state data from NPZ file
         original_input_data: Optional original input data from NPZ file
-        **kwargs: Additional keyword arguments
+        **kwargs: Additional keyword arguments (ignored)
 
     Returns:
         str: Base64 encoded PNG image if return_base64=True, otherwise None
     """
+    plotter = TrajectoryPlotter(
+        state_data=state_data,
+        input_data=input_data,
+        dt=dt,
+        original_state_data=original_state_data,
+        original_input_data=original_input_data,
+        input_plot=input_plot
+    )
 
-    if state_data.ndim != 2:
-        raise ValueError("state_data must be a 2D array with shape (num_states, num_steps)")
+    plotter.plot(mode=plot_mode)
 
-    num_states, num_steps = state_data.shape
-
-    if input_data.size == 0:
-        input_series = np.empty((0, num_steps))
-    elif input_data.ndim == 1:
-        input_series = input_data.reshape(1, -1)
-    elif input_data.ndim == 2:
-        input_series = input_data
-    else:
-        raise ValueError("input_data must be empty, 1D, or 2D array")
-
-    num_inputs = input_series.shape[0]
-
-    if num_steps == 0:
-        raise ValueError("state_data must contain at least one time step")
-
-    # Get colormap
-    total_series = num_states + num_inputs
-    try:
-        cmap = plt.cm.get_cmap('tab20', max(total_series, 1))
-    except (AttributeError, TypeError):
-        # For matplotlib >= 3.7, get_cmap only takes colormap name
-        import matplotlib as mpl
-        cmap = mpl.colormaps['tab20']
-
-    # Create figure based on plot mode
-    if plot_mode == "single":
-        # Mode 1: Single plot (simulated only)
-        fig, ax_ts = plt.subplots(1, 1, figsize=(12, 5), constrained_layout=True)
-        _plot_trajectory_on_axis(ax_ts, state_data, input_data, dt,
-                                "Simulated Trajectory", input_plot, cmap)
-
-    elif plot_mode == "side_by_side":
-        # Mode 2: Both trajectories on same plot with distinct markers
-        if original_state_data is None:
-            raise ValueError("original_state_data must be provided for side_by_side mode")
-
-        fig, ax_ts = plt.subplots(1, 1, figsize=(12, 5), constrained_layout=True)
-
-        num_orig_states = original_state_data.shape[0]
-        time = np.arange(num_steps) * dt
-
-        # Plot original data with thick solid lines and large circle markers
-        for idx in range(num_orig_states):
-            ax_ts.plot(time, original_state_data[idx],
-                      label=f"x{idx + 1} (Original)",
-                      color=cmap(idx),
-                      linewidth=3.5,
-                      linestyle='-',
-                      marker='o',
-                      markersize=6,
-                      markevery=max(1, num_steps // 40),  # Show ~40 markers
-                      alpha=0.6,
-                      zorder=1)  # Draw original data first (behind)
-
-        # Plot simulated data with thin dash-dot lines and triangle markers
-        for idx in range(num_states):
-            ax_ts.plot(time, state_data[idx],
-                      label=f"x{idx + 1} (Simulated)",
-                      color=cmap(idx),
-                      linewidth=2,
-                      linestyle='-.',  # Dash-dot style for more distinction
-                      marker='^',  # Triangle marker
-                      markersize=5,
-                      markevery=max(1, num_steps // 40),
-                      alpha=1.0,
-                      zorder=2)  # Draw simulated data on top
-
-        # Plot inputs if requested
-        if input_plot:
-            if original_input_data is not None and original_input_data.size > 0:
-                orig_input_series = original_input_data.reshape(1, -1) if original_input_data.ndim == 1 else original_input_data
-                for idx in range(orig_input_series.shape[0]):
-                    series_index = num_states + idx
-                    ax_ts.plot(time, orig_input_series[idx],
-                              label=f"u{idx + 1} (Original)",
-                              linestyle='-',
-                              color=cmap(series_index),
-                              linewidth=3.5,
-                              marker='o',
-                              markersize=6,
-                              markevery=max(1, num_steps // 40),
-                              alpha=0.6,
-                              zorder=1)
-
-            if input_series.shape[0] > 0:
-                for idx in range(num_inputs):
-                    series_index = num_states + idx
-                    ax_ts.plot(time, input_series[idx],
-                              label=f"u{idx + 1} (Simulated)",
-                              linestyle='-.',
-                              color=cmap(series_index),
-                              linewidth=2,
-                              marker='^',
-                              markersize=5,
-                              markevery=max(1, num_steps // 40),
-                              alpha=1.0,
-                              zorder=2)
-
-        ax_ts.set_xlabel('Time (s)', fontsize=14)
-        ax_ts.set_ylabel('Values', fontsize=14)
-        ax_ts.set_title('Comparison: Original vs Simulated Trajectories', fontsize=16, fontweight='bold')
-        ax_ts.grid(True, linestyle='--', alpha=0.4)
-        ax_ts.legend(loc='best', fontsize=12, ncol=2)
-
-    elif plot_mode == "stacked":
-        # Mode 3: Vertically stacked comparison
-        if original_state_data is None:
-            raise ValueError("original_state_data must be provided for stacked mode")
-
-        fig, (ax_top, ax_bottom) = plt.subplots(2, 1, figsize=(12, 10),
-                                                 constrained_layout=True, sharex=True)
-
-        # Top: Simulated data
-        _plot_trajectory_on_axis(ax_top, state_data, input_data, dt,
-                                "Simulated Trajectory", input_plot, cmap)
-
-        # Bottom: Original data
-        _plot_trajectory_on_axis(ax_bottom, original_state_data,
-                                original_input_data if original_input_data is not None else np.array([]),
-                                dt, "Original Trajectory", input_plot, cmap)
-
-    else:
-        raise ValueError(f"Invalid plot_mode: {plot_mode}. Must be 'single', 'side_by_side', or 'stacked'")
-
-    # Save to file if requested
     if save_path is not None:
-        directory = os.path.dirname(save_path)
-        if directory:
-            os.makedirs(directory, exist_ok=True)
-        fig.savefig(save_path, dpi=150)
+        plotter.save(save_path)
 
-    # Return base64 encoded image if requested
+    result = None
     if return_base64:
-        buffer = io.BytesIO()
-        fig.savefig(buffer, format='png', dpi=100)
-        buffer.seek(0)
-        base64_image = base64.b64encode(buffer.getvalue()).decode("utf-8")
-        buffer.close()
-        plt.close(fig)
-        return base64_image
+        result = plotter.to_base64()
 
-    plt.close(fig)
-    return None
+    plotter.close()
 
-def ha_evaluation(data: dict, save_path: str, dT: float=0.001, times: float=10.0, plot_mode: str="single"):
-    r"""
-    :param data: Dictionary containing the hybrid automaton.
-    :param save_path: Image save path.
-    :param dT: time step, default 0.001.
-    :param times: Total sampling time, default 10.0.
-    :param plot_mode: Plotting mode - "single", "side_by_side", or "stacked". Default is "single".
+    return result
+
+
+def ha_evaluation(data: dict,
+                  save_path: str,
+                  dT: float = DEFAULT_TIME_STEP,
+                  times: float = 10.0,
+                  plot_mode: str = "single",
+                  npz_file_path: str = 'data_duffing/test_data0.npz',
+                  compute_metrics: bool = True,
+                  return_results: bool = True) -> Optional[Dict[str, Any]]:
     """
+    Evaluate a hybrid automaton against ground truth data (backward-compatible wrapper).
 
-    # Use dictionary directly
+    Args:
+        data: Dictionary containing the hybrid automaton with 'automaton' and 'config' keys
+        save_path: Directory path to save plots
+        dT: Time step, default 0.001
+        times: Total sampling time, default 10.0
+        plot_mode: Plotting mode - "single", "side_by_side", or "stacked"
+        npz_file_path: Path to NPZ file containing ground truth data
+        compute_metrics: Whether to compute error metrics
+        return_results: Whether to return results dictionary
 
-    sys = HybridAutomata.from_json(data["automaton"])
-    dT = data['config']['dt']
-    # load npz file, only use the initial state and input
-    npz_file = np.load('data_duffing/test_data0.npz')
-    state_data_npz = npz_file['state']
-    input_data_npz = npz_file['input']
-    input_list = input_data_npz
-    init_state = state_data_npz[:, :1].tolist()[0]
-    init_state = np.float64(init_state)
+    Returns:
+        Dictionary with evaluation metrics if return_results=True, otherwise None
+    """
+    evaluator = HAEvaluator(
+        ha_dict=data,
+        npz_file_path=npz_file_path,
+        dt=dT,
+        total_time=times
+    )
 
-    # Parse variable names from JSON
-    var_names = [v.strip() for v in data['automaton']['var'].split(',')]
-
-    # Convert init_state to dictionary with variable names as keys
-    init_state_dict = {'mode': 1}
-    if len(var_names) == 1:
-        # Single variable case (e.g., "x")
-        init_state_dict[var_names[0]] = init_state
-    else:
-        # Multiple variables case (e.g., "x1, x2, x3, x4")
-        for i, var_name in enumerate(var_names):
-            init_state_dict[var_name] = [init_state[i]] if i < len(init_state) else [0.0]
-
-    # Use numpy array directly instead of function expression
-    # Match the input variable name from automaton definition
-    input_var_name = data['automaton']['input']
-    init_state_dict[input_var_name] = input_list
-
-    # print('init_state_dict with array input: ', {k: v if not isinstance(v, np.ndarray) else f'<array shape={v.shape}>' for k, v in init_state_dict.items()})
+    return evaluator.evaluate(
+        save_path=save_path,
+        plot_mode=plot_mode,
+        compute_metrics=compute_metrics,
+        return_results=return_results
+    )
 
 
-    # data['init_state'] = [{'mode': 1, 'x': [4], 'u': '0.5 * cos(1.2 * t)'}]
-    data['init_state'] = [init_state_dict]
-    for init_state in data['init_state']:
-        state_data = []
-        mode_data = []
-        input_data = []
-        change_points = [0]
-        sys.reset(init_state, dt=dT)
-        now = 0.
-        idx = 0
-        while now < times:
-            now += dT
-            idx += 1
-            state, mode, switched = sys.next(dT)
-            state_data.append(state)
-            mode_data.append(mode)
-            input_data.append(sys.getInput())
-            if switched:
-                change_points.append(idx)
-        change_points.append(idx)
-        state_data = np.transpose(np.array(state_data))
-        input_data = np.transpose(np.array(input_data))
-        mode_data = np.array(mode_data)
-
-        # plot data with the specified mode
-        mode_suffix_map = {
-            "single": "single",
-            "side_by_side": "side_by_side",
-            "stacked": "stacked"
-        }
-        filename = f"output_{mode_suffix_map.get(plot_mode, 'single')}.png"
-        figure_path = os.path.join(save_path, filename)
-
-        plot_ha(state_data, input_data, dT,
-                save_path=figure_path,
-                plot_mode=plot_mode,
-                original_state_data=state_data_npz,
-                original_input_data=input_data_npz)
+# ============================================================================
+# Main Execution Block (for testing)
+# ============================================================================
 
 if __name__ == "__main__":
+    # Test data: Single mode Duffing oscillator
     data = {
-    "automaton": {
-        "var": "x1",
-        "input": "u1",
-        "mode": [
-            {
-                "id": 1,
-                "eq": "x1[2] = -0.5 * x1[1] - 5.0 * x1[0] - 0.5 * x1[0]**3 + u1"
-            }
-        ],
-        "edge": []
-    },
-    "config": {
-        "dt": 0.001,
-        "total_time": 10.0,
-        "dim": 2,
-        "other_items": ""
+        "automaton": {
+            "var": "x1",
+            "input": "u1",
+            "mode": [
+                {
+                    "id": 1,
+                    "eq": "x1[2] = -0.5 * x1[1] - 5.0 * x1[0] - 0.5 * x1[0]**3 + u1"
+                }
+            ],
+            "edge": []
+        },
+        "config": {
+            "dt": 0.001,
+            "total_time": 10.0,
+            "dim": 2,
+            "other_items": ""
+        }
     }
-}
+
+    # Test data: Two-variable Duffing oscillator
     data1 = {
-    "automaton": {
-        "var": "x1, x2",
-        "input": "u1",
-        "mode": [
-            {
-                "id": 1,
-                "eq": "x1[1] = x2[0], x2[1] = -0.1 * x2[0] - 1.0 * x1[0] - 1.0 * x1[0]**3 + u1"
-            }
-        ],
-        "edge": []
-    },
-    "config": {
-        "dt": 0.001,
-        "total_time": 10.0,
-        "dim": 2,
-        "other_items": ""
+        "automaton": {
+            "var": "x1, x2",
+            "input": "u1",
+            "mode": [
+                {
+                    "id": 1,
+                    "eq": "x1[1] = x2[0], x2[1] = -0.1 * x2[0] - 1.0 * x1[0] - 1.0 * x1[0]**3 + u1"
+                }
+            ],
+            "edge": []
+        },
+        "config": {
+            "dt": 0.001,
+            "total_time": 10.0,
+            "dim": 2,
+            "other_items": ""
+        }
     }
-}
-    # Test all three plotting modes
-    print("Generating plots in all three modes...")
 
-    # Mode 1: Single plot (simulated only)
-    print("1. Generating single plot (simulated only)...")
-    ha_evaluation(data1, 'data_duffing_evaluation', 0.001, 10, plot_mode="single")
+    # Test all three plotting modes with metrics
+    print("Generating plots in all three modes with evaluation metrics...")
+    print("=" * 80)
 
-    # Mode 2: Side-by-side comparison
-    print("2. Generating side-by-side comparison plot...")
-    ha_evaluation(data1, 'data_duffing_evaluation', 0.001, 10, plot_mode="side_by_side")
+    # Mode 1: Single plot (simulated only) with metrics
+    print("\n1. Generating single plot (simulated only) with metrics...")
+    results1 = ha_evaluation(data1, 'data_duffing_evaluation', 0.001, 10,
+                             plot_mode="single",
+                             npz_file_path='data_duffing/test_data0.npz',
+                             compute_metrics=True,
+                             return_results=True)
+    if results1:
+        print(f"\n   === Absolute Error Metrics ===")
+        print(f"   State RMSE: {results1['state_rmse']:.6f}")
+        print(f"   State Max Error: {results1['state_max_error']:.6f}")
+        print(f"   State MAE: {results1['state_mae']:.6f}")
+        print(f"   Mode Accuracy: {results1['mode_accuracy']:.2%}" if results1['mode_accuracy'] else "   Mode Accuracy: N/A")
+        print(f"   Change-Point Error: {results1['change_point_error']:.6f} s" if results1['change_point_error'] else "   Change-Point Error: N/A")
+        print(f"   Input MSE: {results1['input_mse']:.6f}")
 
-    # Mode 3: Stacked comparison
-    print("3. Generating stacked comparison plot...")
-    ha_evaluation(data1, 'data_duffing_evaluation', 0.001, 10, plot_mode="stacked")
+        print(f"\n   === Normalized Metrics (from Evaluation class) ===")
+        if results1['normalized_max_diff'] is not None:
+            print(f"   Normalized Max Diff: {results1['normalized_max_diff']:.6f}")
+            print(f"   Normalized Mean Diff: {results1['normalized_mean_diff']:.6f}")
+        else:
+            print(f"   Normalized Max Diff: N/A (dimension mismatch)")
+            print(f"   Normalized Mean Diff: N/A (dimension mismatch)")
+        print(f"   Training TC: {results1['train_tc']:.6f} s")
+        print(f"   Clustering Error: {results1['clustering_error']}")
 
+    # Mode 2: Side-by-side comparison with metrics
+    print("\n2. Generating side-by-side comparison plot...")
+    results2 = ha_evaluation(data1, 'data_duffing_evaluation', 0.001, 10,
+                             plot_mode="side_by_side",
+                             npz_file_path='data_duffing/test_data0.npz')
+
+    # Mode 3: Stacked comparison with metrics
+    print("\n3. Generating stacked comparison plot...")
+    results3 = ha_evaluation(data1, 'data_duffing_evaluation', 0.001, 10,
+                             plot_mode="stacked",
+                             npz_file_path='data_duffing/test_data0.npz')
+
+    print("\n" + "=" * 80)
     print("All plots generated successfully!")
+    print("\nEvaluation Summary:")
+    print(f"The automaton defined in data1 was evaluated against ground truth data")
+    print(f"from 'data_duffing/test_data0.npz'.")
+    print(f"\nKey findings:")
+    if results1:
+        print(f"  - State tracking RMSE: {results1['state_rmse']:.6f}")
+        print(f"  - Maximum state error: {results1['state_max_error']:.6f}")
+        print(f"  - Mode classification accuracy: {results1['mode_accuracy']:.2%}" if results1['mode_accuracy'] else "  - Mode classification accuracy: N/A")
+    print(f"\nPlots saved to 'data_duffing_evaluation/' directory.")
