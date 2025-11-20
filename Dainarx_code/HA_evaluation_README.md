@@ -31,7 +31,7 @@ HA_evaluation.py
 │   ├── simulate()           # Run HA simulation
 │   ├── compute_metrics()    # Calculate error metrics
 │   ├── plot()               # Generate visualizations
-│   └── evaluate()           # Complete evaluation pipeline
+│   └── __call__()           # Complete evaluation pipeline (callable interface)
 │
 └── Wrapper Functions        # Backward-compatible API
     ├── plot_ha()            # Legacy plotting function
@@ -78,12 +78,12 @@ evaluator = HAEvaluator(
     total_time=10.0
 )
 
-# Run complete evaluation
-results = evaluator.evaluate(
-    save_path='output_dir',
+# Run complete evaluation using the callable interface
+results = evaluator(
     plot_mode='overlay',
-    compute_metrics=True,
-    return_results=True
+    save_path='output_dir/output_overlay.png',
+    show_plot=False,
+    print_metrics=True
 )
 
 # Access results
@@ -91,9 +91,9 @@ print(f"State RMSE: {results['state_rmse']:.6f}")
 print(f"Mode Accuracy: {results['mode_accuracy']:.2%}")
 ```
 
-### Simplified Callable API
+### Callable API Features
 
-The new `__call__` method provides an even simpler interface:
+The `__call__` method provides a simple and user-friendly interface:
 
 ```python
 from HA_evaluation import HAEvaluator
@@ -197,7 +197,7 @@ HAEvaluator(
 | `simulate()` | Run HA simulation | `Dict[str, np.ndarray]` |
 | `compute_metrics()` | Calculate evaluation metrics | `Dict[str, Any]` |
 | `plot(plot_mode, save_path, ...)` | Generate visualization | `Optional[str]` |
-| `evaluate(save_path, plot_mode, ...)` | Complete evaluation pipeline | `Optional[Dict[str, Any]]` |
+| `__call__(plot_mode, save_path, ...)` | Complete evaluation pipeline (callable interface) | `Dict[str, Any]` |
 
 #### Example: Step-by-Step Evaluation
 
@@ -474,9 +474,11 @@ npz_files = ['test_data0.npz', 'test_data1.npz', 'test_data2.npz']
 results_list = []
 for ha_dict, npz_path in zip(ha_configs, npz_files):
     evaluator = HAEvaluator(ha_dict, npz_path)
-    results = evaluator.evaluate(
-        save_path=f'output/{npz_path.replace(".npz", "")}',
-        compute_metrics=True
+    results = evaluator(
+        plot_mode='overlay',
+        save_path=f'output/{npz_path.replace(".npz", "")}_overlay.png',
+        show_plot=False,
+        print_metrics=False
     )
     results_list.append(results)
 
@@ -550,7 +552,7 @@ ValueError: Invalid plot mode: xyz. Must be 'single', 'overlay', or 'stacked'
 ### Memory Management
 
 - Always call `plotter.close()` when done plotting to free memory
-- The `evaluate()` method stores results in instance variables; create new evaluators for batch processing to avoid accumulation
+- The `__call__()` method stores results in instance variables; create new evaluators for batch processing to avoid accumulation
 
 ### Large Datasets
 
@@ -1141,9 +1143,9 @@ HYBRID AUTOMATON EVALUATION RESULTS
 ================================================================================
 ```
 
-### Comparison with Alternative Approaches
+### Comparison of Different Usage Patterns
 
-#### Using evaluate() method (explicit control)
+#### Custom control (disable auto-display/printing)
 
 ```python
 from HA_evaluation import HAEvaluator
@@ -1153,11 +1155,11 @@ evaluator = HAEvaluator(
     npz_file_path='data_duffing/test_data0.npz'
 )
 
-results = evaluator.evaluate(
-    save_path='output_dir',
+results = evaluator(
     plot_mode='overlay',
-    compute_metrics=True,
-    return_results=True
+    save_path='output_dir/output_overlay.png',
+    show_plot=False,
+    print_metrics=False  # Disable automatic printing, we'll print manually
 )
 
 # Manually print specific metrics
@@ -1166,7 +1168,7 @@ if results:
     print(f"Mode Accuracy: {results['mode_accuracy']:.2%}")
 ```
 
-#### Using __call__() method (simplified)
+#### Simplified usage (with defaults)
 
 ```python
 from HA_evaluation import HAEvaluator

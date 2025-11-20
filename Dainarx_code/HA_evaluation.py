@@ -735,57 +735,6 @@ class HAEvaluator:
 
         return result
 
-    def evaluate(self,
-                 save_path: Optional[str] = None,
-                 plot_mode: str = "single",
-                 compute_metrics: bool = True,
-                 return_results: bool = True) -> Optional[Dict[str, Any]]:
-        """
-        Run complete evaluation pipeline.
-
-        This is the main entry point that orchestrates:
-        1. Loading ground truth data
-        2. Running simulation
-        3. Computing metrics (if requested)
-        4. Generating plots (if save_path provided)
-
-        Args:
-            save_path: Directory path to save plots (optional)
-            plot_mode: Plotting mode - "single", "overlay", or "stacked"
-            compute_metrics: Whether to compute error metrics
-            return_results: Whether to return results dictionary
-
-        Returns:
-            Dictionary with evaluation metrics if return_results=True, otherwise None
-        """
-        # Load ground truth
-        self.load_ground_truth()
-
-        # Run simulation
-        self.simulate()
-
-        # Compute metrics if requested
-        if compute_metrics:
-            self.compute_metrics()
-
-        # Generate plot if save path provided
-        if save_path is not None:
-            mode_suffix_map = {
-                "single": "single",
-                "overlay": "overlay",
-                "stacked": "stacked"
-            }
-            filename = f"output_{mode_suffix_map.get(plot_mode, 'single')}.png"
-            figure_path = os.path.join(save_path, filename)
-
-            self.plot(plot_mode=plot_mode, save_path=figure_path)
-
-        # Return results if requested
-        if return_results and self.metrics is not None:
-            return self.metrics
-        else:
-            return None
-
     def __call__(self,
                  plot_mode: str = "overlay",
                  save_path: Optional[str] = None,
