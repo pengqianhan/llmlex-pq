@@ -58,7 +58,7 @@ class TrajectoryPlotter:
 
     Supports three plotting modes:
     - 'single': Plot simulated trajectory only
-    - 'side_by_side': Overlay original and simulated trajectories on the same axes
+    - 'overlay': Overlay original and simulated trajectories on the same axes
     - 'stacked': Vertically stack original and simulated trajectories in separate subplots
     """
 
@@ -206,7 +206,7 @@ class TrajectoryPlotter:
         self.axes = ax
         return self.fig
 
-    def plot_side_by_side(self) -> plt.Figure:
+    def plot_overlay(self) -> plt.Figure:
         """
         Plot original and simulated trajectories overlaid on the same axes.
 
@@ -220,7 +220,7 @@ class TrajectoryPlotter:
             ValueError: If original_state_data is not provided
         """
         if self.original_state_data is None:
-            raise ValueError("original_state_data must be provided for side_by_side mode")
+            raise ValueError("original_state_data must be provided for overlay mode")
 
         self.fig, ax = plt.subplots(1, 1,
                                      figsize=(DEFAULT_FIGURE_WIDTH, DEFAULT_FIGURE_HEIGHT),
@@ -272,7 +272,7 @@ class TrajectoryPlotter:
 
     def _plot_inputs_comparison(self, ax, marker_interval: int):
         """
-        Helper method to plot input comparisons on side-by-side plot.
+        Helper method to plot input comparisons on overlay plot.
 
         Args:
             ax: Matplotlib axis object
@@ -348,7 +348,7 @@ class TrajectoryPlotter:
         Generate plot based on specified mode.
 
         Args:
-            mode: Plotting mode - "single", "side_by_side", or "stacked"
+            mode: Plotting mode - "single", "overlay", or "stacked"
 
         Returns:
             Matplotlib figure object
@@ -358,12 +358,12 @@ class TrajectoryPlotter:
         """
         if mode == "single":
             return self.plot_single()
-        elif mode == "side_by_side":
-            return self.plot_side_by_side()
+        elif mode == "overlay":
+            return self.plot_overlay()
         elif mode == "stacked":
             return self.plot_stacked()
         else:
-            raise ValueError(f"Invalid plot mode: {mode}. Must be 'single', 'side_by_side', or 'stacked'")
+            raise ValueError(f"Invalid plot mode: {mode}. Must be 'single', 'overlay', or 'stacked'")
 
     def save(self, save_path: str, dpi: int = DEFAULT_DPI):
         """
@@ -694,7 +694,7 @@ class HAEvaluator:
         Generate visualization of trajectories.
 
         Args:
-            plot_mode: Plotting mode - "single", "side_by_side", or "stacked"
+            plot_mode: Plotting mode - "single", "overlay", or "stacked"
             save_path: Path to save the figure (optional)
             input_plot: Whether to include input plots
             return_base64: If True, return base64-encoded PNG
@@ -751,7 +751,7 @@ class HAEvaluator:
 
         Args:
             save_path: Directory path to save plots (optional)
-            plot_mode: Plotting mode - "single", "side_by_side", or "stacked"
+            plot_mode: Plotting mode - "single", "overlay", or "stacked"
             compute_metrics: Whether to compute error metrics
             return_results: Whether to return results dictionary
 
@@ -772,7 +772,7 @@ class HAEvaluator:
         if save_path is not None:
             mode_suffix_map = {
                 "single": "single",
-                "side_by_side": "side_by_side",
+                "overlay": "overlay",
                 "stacked": "stacked"
             }
             filename = f"output_{mode_suffix_map.get(plot_mode, 'single')}.png"
@@ -787,7 +787,7 @@ class HAEvaluator:
             return None
 
     def __call__(self,
-                 plot_mode: str = "side_by_side",
+                 plot_mode: str = "overlay",
                  save_path: Optional[str] = None,
                  show_plot: bool = True,
                  print_metrics: bool = True) -> Dict[str, Any]:
@@ -798,7 +798,7 @@ class HAEvaluator:
         evaluation with automatic plot generation and metric display.
 
         Args:
-            plot_mode: Plotting mode - "single", "side_by_side", or "stacked"
+            plot_mode: Plotting mode - "single", "overlay", or "stacked"
             save_path: Optional path to save the plot
             show_plot: Whether to display the plot (using plt.show())
             print_metrics: Whether to print formatted metrics to console
@@ -976,11 +976,11 @@ if __name__ == "__main__":
         print_metrics=True
     )
 
-    # Mode 2: Side-by-side comparison
-    print("\n2. Generating side-by-side comparison plot...")
+    # Mode 2: Overlay comparison
+    print("\n2. Generating overlay comparison plot...")
     results2 = evaluator(
-        plot_mode="side_by_side",
-        save_path='data_duffing_evaluation/output_side_by_side.png',
+        plot_mode="overlay",
+        save_path='data_duffing_evaluation/output_overlay.png',
         show_plot=False,
         print_metrics=False
     )
