@@ -786,6 +786,127 @@ class HAEvaluator:
         else:
             return None
 
+    def __call__(self,
+                 plot_mode: str = "side_by_side",
+                 save_path: Optional[str] = None,
+                 show_plot: bool = True,
+                 print_metrics: bool = True) -> Dict[str, Any]:
+        """
+        Convenience method to directly call evaluator and display results.
+
+        This method makes HAEvaluator callable, providing an easy interface for
+        evaluation with automatic plot generation and metric display.
+
+        Args:
+            plot_mode: Plotting mode - "single", "side_by_side", or "stacked"
+            save_path: Optional path to save the plot
+            show_plot: Whether to display the plot (using plt.show())
+            print_metrics: Whether to print formatted metrics to console
+
+        Returns:
+            Dictionary containing all evaluation metrics and results
+
+        Example:
+            >>> evaluator = HAEvaluator(ha_dict, 'data/test.npz')
+            >>> results = evaluator()  # Shows plot and prints metrics
+            >>> results = evaluator(plot_mode="stacked", save_path="output.png")
+        """
+        # Load ground truth
+        self.load_ground_truth()
+
+        # Run simulation
+        self.simulate()
+
+        # Compute metrics
+        self.compute_metrics()
+
+        # Generate plot
+        if self.ground_truth is None:
+            self.load_ground_truth()
+
+        if self.simulation_results is None:
+            self.simulate()
+
+        # Create plotter
+        plotter = TrajectoryPlotter(
+            state_data=self.simulation_results['state'],
+            input_data=self.simulation_results['input'],
+            dt=self.dt,
+            original_state_data=self.ground_truth['state'],
+            original_input_data=self.ground_truth['input'],
+            input_plot=False
+        )
+
+        # Generate plot
+        plotter.plot(mode=plot_mode)
+
+        # Save if requested
+        if save_path is not None:
+            plotter.save(save_path)
+            if print_metrics:
+                print(f"Plot saved to: {save_path}")
+
+        # Show plot if requested
+        if show_plot:
+            plt.show()
+        else:
+            plotter.close()
+
+        # Print metrics if requested
+        if print_metrics and self.metrics is not None:
+            self._print_formatted_metrics()
+
+        return self.metrics
+
+    def _print_formatted_metrics(self):
+        """
+        Print formatted evaluation metrics to console.
+
+        Displays both absolute error metrics and normalized metrics in a
+        well-formatted, easy-to-read layout.
+        """
+        print("\n" + "=" * 80)
+        print("HYBRID AUTOMATON EVALUATION RESULTS")
+        print("=" * 80)
+
+        # Absolute Error Metrics
+        print("\n┌─ ABSOLUTE ERROR METRICS ─────────────────────────────────────────────────┐")
+        print("│ (Direct interpretability - units match original data)                    │")
+        print("└──────────────────────────────────────────────────────────────────────────┘")
+
+        print(f"  State RMSE (Root Mean Squared Error):  {self.metrics['state_rmse']:.6e}")
+        print(f"  State Max Error:                        {self.metrics['state_max_error']:.6e}")
+        print(f"  State MAE (Mean Absolute Error):        {self.metrics['state_mae']:.6e}")
+
+        if self.metrics['mode_accuracy'] is not None:
+            print(f"  Mode Classification Accuracy:           {self.metrics['mode_accuracy']:.2%}")
+        else:
+            print(f"  Mode Classification Accuracy:           N/A")
+
+        if self.metrics['change_point_error'] is not None:
+            print(f"  Change-Point Error:                     {self.metrics['change_point_error']:.6f} seconds")
+        else:
+            print(f"  Change-Point Error:                     N/A")
+
+        print(f"  Input MSE (Mean Squared Error):         {self.metrics['input_mse']:.6e}")
+
+        # Normalized Metrics
+        print("\n┌─ NORMALIZED METRICS ─────────────────────────────────────────────────────┐")
+        print("│ (For comparison with traditional HA learning - from Evaluation class)    │")
+        print("└──────────────────────────────────────────────────────────────────────────┘")
+
+        if self.metrics['normalized_max_diff'] is not None:
+            print(f"  Normalized Max Difference:              {self.metrics['normalized_max_diff']:.6f}")
+            print(f"  Normalized Mean Difference:             {self.metrics['normalized_mean_diff']:.6f}")
+        else:
+            print(f"  Normalized Max Difference:              N/A (dimension mismatch)")
+            print(f"  Normalized Mean Difference:             N/A (dimension mismatch)")
+
+        print(f"  Training TC (Time Cost):                {self.metrics['train_tc']:.6f} seconds")
+        print(f"  Clustering Error:                       {self.metrics['clustering_error']}")
+
+        print("\n" + "=" * 80 + "\n")
+
 
 # ============================================================================
 # Backward-Compatible Wrapper Functions
@@ -842,45 +963,6 @@ def plot_ha(state_data: np.ndarray,
     return result
 
 
-def ha_evaluation(data: dict,
-                  save_path: str,
-                  dT: float = DEFAULT_TIME_STEP,
-                  times: float = 10.0,
-                  plot_mode: str = "single",
-                  npz_file_path: str = 'data_duffing/test_data0.npz',
-                  compute_metrics: bool = True,
-                  return_results: bool = True) -> Optional[Dict[str, Any]]:
-    """
-    Evaluate a hybrid automaton against ground truth data (backward-compatible wrapper).
-
-    Args:
-        data: Dictionary containing the hybrid automaton with 'automaton' and 'config' keys
-        save_path: Directory path to save plots
-        dT: Time step, default 0.001
-        times: Total sampling time, default 10.0
-        plot_mode: Plotting mode - "single", "side_by_side", or "stacked"
-        npz_file_path: Path to NPZ file containing ground truth data
-        compute_metrics: Whether to compute error metrics
-        return_results: Whether to return results dictionary
-
-    Returns:
-        Dictionary with evaluation metrics if return_results=True, otherwise None
-    """
-    evaluator = HAEvaluator(
-        ha_dict=data,
-        npz_file_path=npz_file_path,
-        dt=dT,
-        total_time=times
-    )
-
-    return evaluator.evaluate(
-        save_path=save_path,
-        plot_mode=plot_mode,
-        compute_metrics=compute_metrics,
-        return_results=return_results
-    )
-
-
 # ============================================================================
 # Main Execution Block (for testing)
 # ============================================================================
@@ -928,47 +1010,43 @@ if __name__ == "__main__":
         }
     }
 
-    # Test all three plotting modes with metrics
-    print("Generating plots in all three modes with evaluation metrics...")
+    # Create evaluator using the new HAEvaluator class
+    print("Testing HAEvaluator with __call__() method...")
     print("=" * 80)
 
+    evaluator = HAEvaluator(
+        ha_dict=data1,
+        npz_file_path='data_duffing/test_data0.npz',
+        dt=0.001,
+        total_time=10.0
+    )
+
     # Mode 1: Single plot (simulated only) with metrics
-    print("\n1. Generating single plot (simulated only) with metrics...")
-    results1 = ha_evaluation(data1, 'data_duffing_evaluation', 0.001, 10,
-                             plot_mode="single",
-                             npz_file_path='data_duffing/test_data0.npz',
-                             compute_metrics=True,
-                             return_results=True)
-    if results1:
-        print(f"\n   === Absolute Error Metrics ===")
-        print(f"   State RMSE: {results1['state_rmse']:.6f}")
-        print(f"   State Max Error: {results1['state_max_error']:.6f}")
-        print(f"   State MAE: {results1['state_mae']:.6f}")
-        print(f"   Mode Accuracy: {results1['mode_accuracy']:.2%}" if results1['mode_accuracy'] else "   Mode Accuracy: N/A")
-        print(f"   Change-Point Error: {results1['change_point_error']:.6f} s" if results1['change_point_error'] else "   Change-Point Error: N/A")
-        print(f"   Input MSE: {results1['input_mse']:.6f}")
+    print("\n1. Generating single plot (simulated only)...")
+    results1 = evaluator(
+        plot_mode="single",
+        save_path='data_duffing_evaluation/output_single.png',
+        show_plot=False,
+        print_metrics=True
+    )
 
-        print(f"\n   === Normalized Metrics (from Evaluation class) ===")
-        if results1['normalized_max_diff'] is not None:
-            print(f"   Normalized Max Diff: {results1['normalized_max_diff']:.6f}")
-            print(f"   Normalized Mean Diff: {results1['normalized_mean_diff']:.6f}")
-        else:
-            print(f"   Normalized Max Diff: N/A (dimension mismatch)")
-            print(f"   Normalized Mean Diff: N/A (dimension mismatch)")
-        print(f"   Training TC: {results1['train_tc']:.6f} s")
-        print(f"   Clustering Error: {results1['clustering_error']}")
-
-    # Mode 2: Side-by-side comparison with metrics
+    # Mode 2: Side-by-side comparison
     print("\n2. Generating side-by-side comparison plot...")
-    results2 = ha_evaluation(data1, 'data_duffing_evaluation', 0.001, 10,
-                             plot_mode="side_by_side",
-                             npz_file_path='data_duffing/test_data0.npz')
+    results2 = evaluator(
+        plot_mode="side_by_side",
+        save_path='data_duffing_evaluation/output_side_by_side.png',
+        show_plot=False,
+        print_metrics=False
+    )
 
-    # Mode 3: Stacked comparison with metrics
+    # Mode 3: Stacked comparison
     print("\n3. Generating stacked comparison plot...")
-    results3 = ha_evaluation(data1, 'data_duffing_evaluation', 0.001, 10,
-                             plot_mode="stacked",
-                             npz_file_path='data_duffing/test_data0.npz')
+    results3 = evaluator(
+        plot_mode="stacked",
+        save_path='data_duffing_evaluation/output_stacked.png',
+        show_plot=False,
+        print_metrics=False
+    )
 
     print("\n" + "=" * 80)
     print("All plots generated successfully!")
