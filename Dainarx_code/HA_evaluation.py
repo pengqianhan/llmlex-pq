@@ -908,60 +908,6 @@ class HAEvaluator:
         print("\n" + "=" * 80 + "\n")
 
 
-# ============================================================================
-# Backward-Compatible Wrapper Functions
-# ============================================================================
-
-def plot_ha(state_data: np.ndarray,
-            input_data: np.ndarray,
-            dt: float = DEFAULT_TIME_STEP,
-            save_path: Optional[str] = None,
-            input_plot: bool = False,
-            return_base64: bool = False,
-            plot_mode: str = "single",
-            original_state_data: Optional[np.ndarray] = None,
-            original_input_data: Optional[np.ndarray] = None,
-            **kwargs) -> Optional[str]:
-    """
-    Plot the time series for states/inputs (backward-compatible wrapper).
-
-    Args:
-        state_data: 2D array with shape (num_states, num_steps) - simulated data
-        input_data: Input data (empty, 1D, or 2D array) - simulated data
-        dt: Time step size
-        save_path: Path to save the figure
-        input_plot: Whether to plot input data
-        return_base64: If True, return base64 encoded PNG image instead of None
-        plot_mode: Plotting mode - "single", "side_by_side", or "stacked"
-        original_state_data: Optional original state data from NPZ file
-        original_input_data: Optional original input data from NPZ file
-        **kwargs: Additional keyword arguments (ignored)
-
-    Returns:
-        str: Base64 encoded PNG image if return_base64=True, otherwise None
-    """
-    plotter = TrajectoryPlotter(
-        state_data=state_data,
-        input_data=input_data,
-        dt=dt,
-        original_state_data=original_state_data,
-        original_input_data=original_input_data,
-        input_plot=input_plot
-    )
-
-    plotter.plot(mode=plot_mode)
-
-    if save_path is not None:
-        plotter.save(save_path)
-
-    result = None
-    if return_base64:
-        result = plotter.to_base64()
-
-    plotter.close()
-
-    return result
-
 
 # ============================================================================
 # Main Execution Block (for testing)
