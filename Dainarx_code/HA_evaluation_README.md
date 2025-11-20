@@ -7,7 +7,7 @@ The `HA_evaluation.py` module provides a comprehensive framework for evaluating 
 **Key Features:**
 - **Object-Oriented Design**: Clean class-based architecture for modularity and reusability
 - **Comprehensive Metrics**: Both absolute error metrics (RMSE, MAE) and normalized metrics for comparison
-- **Flexible Visualization**: Three plotting modes (single, side-by-side, stacked) for trajectory comparison
+- **Flexible Visualization**: Three plotting modes (single, overlay, stacked) for trajectory comparison
 - **Backward Compatibility**: Original function interfaces preserved for existing code
 
 ---
@@ -21,7 +21,7 @@ HA_evaluation.py
 │
 ├── TrajectoryPlotter        # Handles all plotting operations
 │   ├── plot_single()        # Plot simulated trajectory only
-│   ├── plot_side_by_side()  # Overlay original vs simulated
+│   ├── plot_overlay()  # Overlay original vs simulated
 │   ├── plot_stacked()       # Vertically stacked comparison
 │   ├── save()               # Save figure to file
 │   └── to_base64()          # Convert to base64 string
@@ -81,7 +81,7 @@ evaluator = HAEvaluator(
 # Run complete evaluation
 results = evaluator.evaluate(
     save_path='output_dir',
-    plot_mode='side_by_side',
+    plot_mode='overlay',
     compute_metrics=True,
     return_results=True
 )
@@ -91,23 +91,21 @@ print(f"State RMSE: {results['state_rmse']:.6f}")
 print(f"Mode Accuracy: {results['mode_accuracy']:.2%}")
 ```
 
-### Legacy API (Backward Compatible)
+### Simplified Callable API
+
+The new `__call__` method provides an even simpler interface:
 
 ```python
-from HA_evaluation import ha_evaluation
+from HA_evaluation import HAEvaluator
 
-# Same ha_dict as above...
-
-results = ha_evaluation(
-    data=ha_dict,
-    save_path='output_dir',
-    dT=0.001,
-    times=10.0,
-    plot_mode='side_by_side',
-    npz_file_path='data_duffing/test_data0.npz',
-    compute_metrics=True,
-    return_results=True
+# Create evaluator
+evaluator = HAEvaluator(
+    ha_dict=ha_dict,
+    npz_file_path='data_duffing/test_data0.npz'
 )
+
+# One-line evaluation with automatic plot and metrics display
+results = evaluator()
 ```
 
 ---
@@ -136,7 +134,7 @@ TrajectoryPlotter(
 | Method | Description | Returns |
 |--------|-------------|---------|
 | `plot_single()` | Plot simulated trajectory only | `matplotlib.figure.Figure` |
-| `plot_side_by_side()` | Overlay original and simulated on same axes | `matplotlib.figure.Figure` |
+| `plot_overlay()` | Overlay original and simulated on same axes | `matplotlib.figure.Figure` |
 | `plot_stacked()` | Vertically stacked comparison plots | `matplotlib.figure.Figure` |
 | `plot(mode)` | Generate plot based on mode string | `matplotlib.figure.Figure` |
 | `save(save_path, dpi)` | Save current figure to file | `None` |
@@ -164,7 +162,7 @@ plotter = TrajectoryPlotter(
 )
 
 # Generate side-by-side comparison
-plotter.plot_side_by_side()
+plotter.plot_overlay()
 plotter.save('comparison.png', dpi=300)
 
 # Or get base64 for web display
@@ -255,7 +253,7 @@ evaluator.plot(plot_mode='single', save_path='output_single.png')
 Overlays original and simulated trajectories on the same axes with distinct visual styles.
 
 ```python
-evaluator.plot(plot_mode='side_by_side', save_path='output_comparison.png')
+evaluator.plot(plot_mode='overlay', save_path='output_comparison.png')
 ```
 
 **Visual Encoding**:
@@ -492,7 +490,7 @@ for i, res in enumerate(results_list):
 ```python
 # Generate base64 image without saving to disk
 base64_img = evaluator.plot(
-    plot_mode='side_by_side',
+    plot_mode='overlay',
     return_base64=True
 )
 
@@ -532,7 +530,7 @@ ValueError: state_data must be a 2D array with shape (num_states, num_steps)
 #### 3. Missing Original Data for Comparison Plots
 
 ```python
-ValueError: original_state_data must be provided for side_by_side mode
+ValueError: original_state_data must be provided for overlay mode
 ```
 
 **Solution**: Use `plot_mode='single'` or ensure ground truth data is loaded.
@@ -540,7 +538,7 @@ ValueError: original_state_data must be provided for side_by_side mode
 #### 4. Invalid Plot Mode
 
 ```python
-ValueError: Invalid plot mode: xyz. Must be 'single', 'side_by_side', or 'stacked'
+ValueError: Invalid plot mode: xyz. Must be 'single', 'overlay', or 'stacked'
 ```
 
 **Solution**: Use one of the three supported plot modes.
@@ -583,7 +581,7 @@ python HA_evaluation.py
 
 This will generate three test plots in `data_duffing_evaluation/`:
 - `output_single.png` - Single trajectory plot
-- `output_side_by_side.png` - Overlay comparison
+- `output_overlay.png` - Overlay comparison
 - `output_stacked.png` - Stacked comparison
 
 And print evaluation metrics to console.
@@ -994,8 +992,228 @@ This module is part of the LLM-LEx project. See parent directory for license inf
 
 ---
 
+---
+
+## New Feature: Callable Interface (`__call__` Method)
+
+### Overview
+
+The `HAEvaluator` class now supports direct calling via the `__call__` method, providing a convenient interface for quick evaluation with automatic plot generation and formatted metrics display.
+
+### Quick Example
+
+```python
+from HA_evaluation import HAEvaluator
+
+# Create evaluator
+evaluator = HAEvaluator(
+    ha_dict=ha_dict,
+    npz_file_path='data_duffing/test_data0.npz',
+    dt=0.001,
+    total_time=10.0
+)
+
+# Simply call the evaluator!
+results = evaluator()  # Shows plot and prints formatted metrics
+```
+
+This single call automatically:
+1. Loads ground truth data
+2. Runs simulation
+3. Computes all metrics (absolute + normalized)
+4. Displays a comparison plot
+5. Prints formatted metrics to console
+6. Returns the metrics dictionary
+
+### Method Signature
+
+```python
+def __call__(self,
+             plot_mode: str = "overlay",
+             save_path: Optional[str] = None,
+             show_plot: bool = True,
+             print_metrics: bool = True) -> Dict[str, Any]:
+```
+
+### Parameters
+
+| Parameter | Type | Default | Description |
+|-----------|------|---------|-------------|
+| `plot_mode` | str | `"overlay"` | Plotting mode: "single", "overlay", or "stacked" |
+| `save_path` | Optional[str] | `None` | Optional path to save the plot |
+| `show_plot` | bool | `True` | Whether to display the plot (using plt.show()) |
+| `print_metrics` | bool | `True` | Whether to print formatted metrics to console |
+
+### Returns
+
+Dictionary containing all evaluation metrics and results (same structure as `compute_metrics()`).
+
+### Usage Examples
+
+#### 1. Interactive Mode (Default)
+
+```python
+# Show plot and print metrics
+results = evaluator()
+```
+
+**Output**:
+- Opens matplotlib window with side-by-side comparison plot
+- Prints formatted metrics table to console
+- Returns metrics dictionary
+
+#### 2. Save Plot Without Display
+
+```python
+# Save plot to file, don't show interactively
+results = evaluator(
+    save_path="output/comparison.png",
+    show_plot=False
+)
+```
+
+#### 3. Different Plot Modes
+
+```python
+# Single trajectory only
+results = evaluator(plot_mode="single")
+
+# Overlaid comparison (default)
+results = evaluator(plot_mode="overlay")
+
+# Stacked subplots
+results = evaluator(plot_mode="stacked")
+```
+
+#### 4. Programmatic Use (No Display)
+
+```python
+# Get metrics silently
+results = evaluator(
+    show_plot=False,
+    print_metrics=False
+)
+
+# Access metrics programmatically
+print(f"RMSE: {results['state_rmse']:.6e}")
+print(f"Accuracy: {results['mode_accuracy']:.2%}")
+```
+
+#### 5. Save and Display
+
+```python
+# Both save to file AND show interactively
+results = evaluator(
+    plot_mode="stacked",
+    save_path="output/evaluation.png",
+    show_plot=True,
+    print_metrics=True
+)
+```
+
+### Formatted Metrics Output
+
+When `print_metrics=True` (default), the method prints a well-formatted table:
+
+```
+================================================================================
+HYBRID AUTOMATON EVALUATION RESULTS
+================================================================================
+
+┌─ ABSOLUTE ERROR METRICS ─────────────────────────────────────────────────┐
+│ (Direct interpretability - units match original data)                    │
+└──────────────────────────────────────────────────────────────────────────┘
+  State RMSE (Root Mean Squared Error):  2.134837e+00
+  State Max Error:                        5.289990e+00
+  State MAE (Mean Absolute Error):        1.674279e+00
+  Mode Classification Accuracy:           52.52%
+  Change-Point Error:                     4.642000 seconds
+  Input MSE (Mean Squared Error):         0.000000e+00
+
+┌─ NORMALIZED METRICS ─────────────────────────────────────────────────────┐
+│ (For comparison with traditional HA learning - from Evaluation class)    │
+└──────────────────────────────────────────────────────────────────────────┘
+  Normalized Max Difference:              N/A (dimension mismatch)
+  Normalized Mean Difference:             N/A (dimension mismatch)
+  Training TC (Time Cost):                0.000000 seconds
+  Clustering Error:                       1
+
+================================================================================
+```
+
+### Comparison with Alternative Approaches
+
+#### Using evaluate() method (explicit control)
+
+```python
+from HA_evaluation import HAEvaluator
+
+evaluator = HAEvaluator(
+    ha_dict=ha_dict,
+    npz_file_path='data_duffing/test_data0.npz'
+)
+
+results = evaluator.evaluate(
+    save_path='output_dir',
+    plot_mode='overlay',
+    compute_metrics=True,
+    return_results=True
+)
+
+# Manually print specific metrics
+if results:
+    print(f"State RMSE: {results['state_rmse']:.6f}")
+    print(f"Mode Accuracy: {results['mode_accuracy']:.2%}")
+```
+
+#### Using __call__() method (simplified)
+
+```python
+from HA_evaluation import HAEvaluator
+
+evaluator = HAEvaluator(ha_dict, 'data_duffing/test_data0.npz')
+
+# One line - automatic plot display and formatted metrics
+results = evaluator()
+```
+
+### Benefits of __call__() Method
+
+1. **Simpler API**: Single method call instead of separate plot/compute/print steps
+2. **Formatted Output**: Professional, well-organized metric display with clear section headers
+3. **Flexible**: Can disable display/print for programmatic use
+4. **Reusable**: Create evaluator once, call multiple times with different options
+5. **Interactive**: Perfect for Jupyter notebooks and interactive sessions
+6. **Pythonic**: Makes evaluator objects callable, following Python conventions
+
+### Reusing Evaluator Instance
+
+You can call the same evaluator multiple times with different settings:
+
+```python
+# Create evaluator once
+evaluator = HAEvaluator(ha_dict, npz_file_path)
+
+# Generate different plots
+evaluator(plot_mode="single", save_path="single.png", show_plot=False)
+evaluator(plot_mode="overlay", save_path="comparison.png", show_plot=False)
+evaluator(plot_mode="stacked", save_path="stacked.png", show_plot=False)
+
+# Interactive display
+evaluator(plot_mode="overlay")  # Show in window
+```
+
+### Notes
+
+- The simulation and metrics are recomputed on each call (ensuring fresh results)
+- Plot windows must be closed manually when `show_plot=True`
+- If `save_path` is provided, confirmation is printed when `print_metrics=True`
+- All metrics are available in the returned dictionary regardless of `print_metrics` setting
+
+---
+
 ## Contact
 
 For questions or issues related to this module, please refer to the main project repository or contact the development team.
 
-**Last Updated**: 2025-01-20
+**Last Updated**: 2025-01-21
